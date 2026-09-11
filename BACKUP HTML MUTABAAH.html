@@ -1,0 +1,2469 @@
+<!-- Aplikasi Setoran Hafalan Al-Quran Frontend HTML, CSS, JS (Tema Warm Cream, Emerald & Glassmorphism Gold) -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Aplikasi Setoran Hafalan</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></link>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html { width: 100%; height: 100%; background-color: #d1cdc7; transition: background-color 0.3s ease; }
+
+        body {
+            background-color: #d1cdc7;
+            margin: 0; padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%; height: 100%; min-height: 100%;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            transition: background-color 0.3s ease;
+        }
+
+        #blogger-app-override {
+            background: #F4EFE6;
+            width: 100%; max-width: 440px !important;
+            height: 100vh; height: 100svh; height: 100dvh;
+            min-height: 0; max-height: 100dvh;
+            position: fixed; inset: 0; margin: 0 auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            isolation: isolate;
+            transition: all 0.3s ease;
+        }
+
+        #app-root { height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+        #app-root > main { flex-grow: 1; height: auto !important; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; transition: all 0.3s ease; }
+        .login-screen { min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; transition: background-color 0.3s ease; }
+
+        @media (max-height: 720px) { .login-screen { justify-content: flex-start !important; } }
+        @media (min-width: 640px) {
+            body { align-items: center; }
+            #blogger-app-override {
+                height: min(90dvh, 900px) !important;
+                min-height: min(600px, 100dvh);
+                position: relative; inset: auto; margin: 0;
+                border-radius: 24px; overflow: hidden;
+            }
+            #blogger-app-override::-webkit-scrollbar { width: 0px; background: transparent; }
+        }
+
+        /* =========================================
+           TAMPILAN LANDSCAPE & GRID UNTUK SEMUA AKUN DI LAPTOP
+           ========================================= */
+        @media (min-width: 900px) {
+    /* Membuat container utama lebih lapang tapi tetap rapi */
+    #blogger-app-override {
+        max-width: 1050px !important;
+        height: 90dvh !important;
+        border-radius: 24px; 
+    }
+
+    /* Mengatur grid 2 kolom asimetris/seimbang untuk dashboard ustadz */
+    .admin-grid-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    /* Floating nav diatur agar TIDAK penuh selebar layar, melainkan di tengah dengan lebar maksimal (misal 450px) */
+    .floating-nav {
+        position: absolute;
+        bottom: 20px;
+        left: 50% !important;
+        transform: translateX(-50%);
+        width: 420px !important;
+        max-width: 90%;
+        border-radius: 9999px;
+    }
+}
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #044343; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .btn-active:active { transform: scale(0.96); opacity: 0.9; }
+        
+        .app-modal { 
+    display: none; 
+    position: fixed; /* <-- Ubah absolute menjadi fixed di sini */
+    inset: 0; 
+    background-color: rgba(0,0,0,0.5); 
+    z-index: 9999999; 
+    align-items: center; 
+    justify-content: center; 
+    padding: 1rem; 
+    backdrop-filter: blur(4px); 
+}
+        .app-modal.active { display: flex !important; }
+        .app-modal > div { max-height: calc(100% - 2rem) !important; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: all 0.3s ease; }
+        
+        .floating-nav { 
+            position: absolute; 
+            bottom: 16px; 
+            left: 16px; 
+            right: 16px;
+            width: calc(100% - 32px);
+            z-index: 50;
+            background: rgba(244, 239, 230, 0.5); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: none;
+            box-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.1);
+            border-radius: 9999px;
+            height: 4.8rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 12px;
+            transition: background 0.3s ease;
+        }
+
+        /* =========================================
+           TEMA DARK MODE ISLAMI (EMERALD NIGHT) FIX
+           ========================================= */
+        body.dark-mode { background-color: #040d0d !important; }
+        
+        body.dark-mode #blogger-app-override, 
+        body.dark-mode main, 
+        body.dark-mode .login-screen,
+        body.dark-mode .bg-\[\#F4EFE6\] { 
+            background-color: #0a1919 !important; 
+        }
+        
+        body.dark-mode .bg-white { 
+            background-color: #102a2a !important; 
+            border-color: #1a3c3c !important; 
+        }
+        
+        body.dark-mode .text-gray-900,
+        body.dark-mode .text-gray-800, 
+        body.dark-mode .text-gray-700, 
+        body.dark-mode .text-\[\#044343\],
+        body.dark-mode .text-\[\#023131\] { 
+            color: #f1f5f9 !important; 
+        }
+        body.dark-mode .text-gray-600, 
+        body.dark-mode .text-gray-500, 
+        body.dark-mode .text-gray-400 { 
+            color: #94a3b8 !important; 
+        }
+        
+        body.dark-mode .bg-gray-50,
+        body.dark-mode input, 
+        body.dark-mode textarea, 
+        body.dark-mode select { 
+            background-color: #0d2222 !important; 
+            color: #f1f5f9 !important; 
+            border-color: #1a3c3c !important; 
+        }
+        
+        body.dark-mode .floating-nav { 
+            background: rgba(16, 42, 42, 0.85) !important; 
+            border-color: rgba(212, 175, 55, 0.2) !important; 
+        }
+        body.dark-mode .shadow-\[0_4px_15px_rgba\(0\,0\,0\,0\.03\)\], 
+        body.dark-mode .shadow-sm { 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important; 
+        }
+        
+        body.dark-mode .bg-emerald-50, body.dark-mode .bg-emerald-50\/50 { background-color: rgba(16, 185, 129, 0.1) !important; border-color: rgba(16, 185, 129, 0.2) !important; }
+        body.dark-mode .bg-amber-50, body.dark-mode .bg-amber-50\/50 { background-color: rgba(245, 158, 11, 0.1) !important; border-color: rgba(245, 158, 11, 0.2) !important; }
+        body.dark-mode .bg-red-50, body.dark-mode .bg-red-50\/50 { background-color: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.2) !important; }
+        body.dark-mode .bg-blue-50, body.dark-mode .bg-blue-50\/30, body.dark-mode .bg-blue-50\/40 { background-color: rgba(59, 130, 246, 0.1) !important; border-color: rgba(59, 130, 246, 0.2) !important; }
+        body.dark-mode .bg-purple-50, body.dark-mode .bg-purple-50\/30, body.dark-mode .bg-purple-50\/40 { background-color: rgba(168, 85, 247, 0.1) !important; border-color: rgba(168, 85, 247, 0.2) !important; }
+        
+        body.dark-mode .text-emerald-900, body.dark-mode .text-emerald-700, body.dark-mode .text-emerald-600 { color: #6ee7b7 !important; }
+        body.dark-mode .text-amber-900, body.dark-mode .text-amber-700, body.dark-mode .text-amber-600 { color: #fcd34d !important; }
+        body.dark-mode .text-red-900, body.dark-mode .text-red-700, body.dark-mode .text-red-600 { color: #fca5a5 !important; }
+        body.dark-mode .text-blue-900, body.dark-mode .text-blue-700, body.dark-mode .text-blue-600 { color: #93c5fd !important; }
+        body.dark-mode .text-purple-900, body.dark-mode .text-purple-700, body.dark-mode .text-purple-600 { color: #d8b4fe !important; }
+    </style>
+</head>
+<body>
+
+<div id="blogger-app-override">
+  <div class="h-full w-full bg-[#F4EFE6] flex flex-col relative" id="app-root"></div>
+</div>
+
+<script>
+// ==========================================
+// 1. KONFIGURASI & STATE (GLOBAL)
+// ==========================================
+const IS_PREVIEW = false; 
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzCIS0RFFWhBnualFW0c6jgDaVxSFnNdQcyX83TsspkvdJ1Lz3xCFDgOZ0zwMZ9hdU3cQ/exec"; 
+
+let state = {
+  user: null, activeTab: 'beranda', activeTabOrtu: 'beranda', inputType: 'hafalan', 
+  selectedKelasFilter: 'ALL', searchKeyword: '', filterRiwayatRaporSantri: '',
+  filterMutabaahKelas: '', filterMutabaahSantri: '',
+  selectedInputKelas: '', 
+  santri: [], setoran: [], kelas: [], halaqah: [], target: [], ustadz: [], mutabaah: [], santri_info: null, pengumuman: '', raporBiru: [],
+  pengaturan: { 
+    nama_lembaga: 'SDIT DARUSSAKINAH BATAM', 
+    nama_pimpinan: '', nama_koordinator: '', 
+    logo: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi-d-py0iyhZ1QlXf_zvJbzrLcwSsJwBEHa0BqPJJdvb94VfrCnCiybb3jehSXNl6e8LrvptMbXgJMh0yUkWZljHKTMWD3UY-6wXf-mSsN27LekzH808KhGRQHmXlJY9s3yCv-LRUVzkUfcJV2w3w6Bjnct4AdNrtWmMXKCzE-8DsnlfDVEJBhyckH5W1s/s320/LOGO_SD_DS_NEW-removebg-preview.png', 
+    link_wa: '', alamat: '', telepon: '', email: '', website: '' 
+  },
+  waktuSalat: null, isLoading: false,
+  isDarkMode: localStorage.getItem('isDarkMode') === 'true'
+};
+
+let stateProgKelas = ''; 
+window.ortuChartInstance = null; 
+window.adminChartInstance = null;
+
+// ==========================================
+// VARIABEL & FUNGSI REKAM AUDIO TALQIN
+// ==========================================
+let mediaRecorder;
+let audioChunks = [];
+let audioBase64 = null;
+let recordInterval;
+let recordSeconds = 0;
+
+window.startRecording = async function() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = event => {
+            if (event.data.size > 0) audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            const previewEl = document.getElementById('audio-preview');
+            previewEl.src = audioUrl;
+            previewEl.classList.remove('hidden');
+            document.getElementById('btn-hapus-rekaman').classList.remove('hidden');
+
+            // Konversi ke Base64 untuk dikirim ke Google Apps Script
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = function() {
+                audioBase64 = reader.result;
+            }
+        };
+
+        mediaRecorder.start();
+        document.getElementById('btn-start-record').classList.add('hidden');
+        document.getElementById('btn-stop-record').classList.remove('hidden');
+        document.getElementById('recording-indicator').classList.remove('hidden');
+
+        recordSeconds = 0;
+        document.getElementById('record-time').innerText = "00:00";
+        recordInterval = setInterval(() => {
+            recordSeconds++;
+            const m = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
+            const s = String(recordSeconds % 60).padStart(2, '0');
+            document.getElementById('record-time').innerText = `${m}:${s}`;
+        }, 1000);
+
+    } catch (err) {
+        Swal.fire('Akses Ditolak', 'Harap izinkan akses mikrofon di browser Anda.', 'error');
+    }
+};
+
+window.stopRecording = function() {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        clearInterval(recordInterval);
+        
+        const btnStart = document.getElementById('btn-start-record');
+        btnStart.classList.remove('hidden');
+        btnStart.innerHTML = '<i class="fas fa-redo"></i> Rekam Ulang';
+        
+        document.getElementById('btn-stop-record').classList.add('hidden');
+        document.getElementById('recording-indicator').classList.add('hidden');
+    }
+};
+
+window.hapusRekaman = function() {
+    audioChunks = [];
+    audioBase64 = null;
+    const previewEl = document.getElementById('audio-preview');
+    previewEl.src = "";
+    previewEl.classList.add('hidden');
+    
+    document.getElementById('btn-hapus-rekaman').classList.add('hidden');
+    const btnStart = document.getElementById('btn-start-record');
+    btnStart.innerHTML = '<i class="fas fa-microphone"></i> Mulai Rekam';
+};
+
+const DAFTAR_SURAH = ["Al-Fatihah", "Al-Baqarah", "Ali 'Imran", "An-Nisa'", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Taubah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra'", "Al-Kahf", "Maryam", "Ta Ha", "Al-Anbiya'", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Asy-Syu'ara'", "An-Naml", "Al-Qasas", "Al-'Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba'", "Fatir", "Ya Sin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Asy-Syura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jasiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Az-Zariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hasyr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Tagabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddassir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba'", "An-Nazi'at", "'Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Insyiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Gasyiyah", "Al-Fajr", "Al-Balad", "Asy-Syams", "Al-Lail", "Ad-Duha", "Asy-Syarh", "At-Tin", "Al-'Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-'Adiyat", "Al-Qari'ah", "At-Takasur", "Al-'Asr", "Al-Humazah", "Al-Fil", "Quraisy", "Al-Ma'un", "Al-Kausar", "Al-Kafirun", "An-Nasr", "Al-Lahab", "Al-Ikhlas", "Al-Falaq", "An-Nas"];
+
+// Fungsi pembersih format persentase (mengatasi data desimal 0.98 dari Google Sheets menjadi 98%)
+window.formatNilaiTargetClean = function(valTarget) {
+  if (!valTarget || valTarget === '-') return '-';
+  let str = String(valTarget).trim();
+  let cleanNumStr = str.replace('%', '').replace(',', '.');
+  let num = parseFloat(cleanNumStr);
+  if (isNaN(num)) return str;
+  // Jika tersimpan sebagai desimal pecahan (misal 0.98 atau 0.5)
+  if (num > 0 && num <= 1) {
+    num = num * 100;
+  }
+  let rounded = Math.round(num * 10) / 10;
+  return rounded + '%';
+};
+
+window.formatAyatClean = function(ayatVal) {
+  if (!ayatVal) return '-';
+  let str = String(ayatVal).trim();
+  if (str.includes('T') && str.includes('Z') && (str.includes(':') || str.length > 15)) {
+    return '1-12';
+  }
+  return str;
+};
+
+window.isKoordinator = function() {
+  if (!state.user) return false;
+  const roleUser = String(state.user.role || '').trim().toLowerCase();
+  const username = String(state.user.username || '').trim().toLowerCase();
+  const namaUser = String(state.user.nama_lengkap || '').trim().toLowerCase();
+  if (roleUser !== 'ustadz' && roleUser !== 'admin') return false;
+  return username === 'admin' || namaUser === 'fadhl al harits' || namaUser === 'admin';
+};
+
+// ==========================================
+// 2. FUNGSI UTILITY & AUDIO & THEME
+// ==========================================
+window.applyTheme = function() {
+  if (state.isDarkMode) {
+      document.body.classList.add('dark-mode');
+  } else {
+      document.body.classList.remove('dark-mode');
+  }
+};
+window.applyTheme();
+
+window.toggleDarkMode = function() {
+  state.isDarkMode = !state.isDarkMode;
+  localStorage.setItem('isDarkMode', state.isDarkMode);
+  window.applyTheme();
+  window.renderApp();
+};
+
+window.playSuccessSound = function() {
+  try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.1);
+      
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+  } catch (e) { console.log("Audio API not supported"); }
+};
+
+window.apiCall = async function(action, payload) {
+  if (IS_PREVIEW) return { success: true, message: 'Preview Mode' };
+  try {
+    const response = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: action, payload: payload }), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
+    return await response.json();
+  } catch (e) { return { success: false, message: 'Gagal terhubung. Detail: ' + e.message }; }
+};
+
+window.togglePassword = function() {
+  const passInput = document.getElementById('password'); const toggleIcon = document.getElementById('toggle-icon');
+  if (passInput.type === 'password') { passInput.type = 'text'; toggleIcon.className = 'fas fa-eye-slash text-gray-400 absolute right-4 top-4 outline-none'; } 
+  else { passInput.type = 'password'; toggleIcon.className = 'fas fa-eye text-gray-400 absolute right-4 top-4 outline-none'; }
+};
+
+window.searchData = function(cardClass, keyword) {
+  const elements = document.querySelectorAll(cardClass);
+  const lowerKeyword = keyword.toLowerCase();
+  elements.forEach(el => { el.style.display = el.innerText.toLowerCase().includes(lowerKeyword) ? '' : 'none'; });
+};
+
+window.openModal = function(id) { 
+  document.getElementById(id)?.classList.add('active'); 
+  // Auto-scroll ke atas bagian modal agar ustadz tidak bingung melihat form di atas jika diklik dari bawah
+  const modalContainer = document.querySelector(`#${id} > div`);
+  if (modalContainer) modalContainer.scrollTop = 0;
+};
+window.closeModal = function(id) { document.getElementById(id)?.classList.remove('active'); };
+
+window.copyCredential = function(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        Swal.fire({
+            title: 'Berhasil disalin!',
+            text: text,
+            icon: 'success',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    }).catch(err => {
+        let tempInput = document.createElement("input");
+        tempInput.value = text;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        Swal.fire({
+            title: 'Berhasil disalin!',
+            text: text,
+            icon: 'success',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    });
+};
+
+window.initOrtuChart = function() {
+  const ctx = document.getElementById('ortuChart');
+  if (!ctx) return;
+  if (window.ortuChartInstance) window.ortuChartInstance.destroy();
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+  let labels = []; let dataPoints = [];
+  for (let i = 5; i >= 0; i--) {
+      let d = new Date(); d.setMonth(d.getMonth() - i); labels.push(monthNames[d.getMonth()]);
+      let count = (state.setoran || []).filter(s => { let sd = new Date(s.tanggal); return sd.getMonth() === d.getMonth() && sd.getFullYear() === d.getFullYear(); }).length;
+      dataPoints.push(count);
+  }
+  
+  const gridColor = state.isDarkMode ? '#1a3c3c' : '#f3f4f6';
+
+  window.ortuChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: { labels: labels, datasets: [{ label: 'Aktivitas Hafalan', data: dataPoints, borderColor: '#044343', backgroundColor: 'rgba(4, 67, 67, 0.1)', borderWidth: 2.5, pointBackgroundColor: '#D4AF37', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4, fill: true, tension: 0.4 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: gridColor, drawBorder: false } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+  });
+};
+
+// UPDATE CHART ADMIN/USTADZ (Dinamis dengan dropdown filter kelas/halaqah)
+window.updateAdminChart = function(filterVal = 'ALL') {
+    const ctx = document.getElementById('adminChart');
+    if (!ctx) return;
+    if (window.adminChartInstance) window.adminChartInstance.destroy();
+
+    const namaLogin = String(state.user.nama_lengkap || '').trim().toLowerCase();
+    const isSuperAdmin = window.isKoordinator();
+
+    let targetSantri = state.santri || [];
+    
+    if (!isSuperAdmin) {
+        targetSantri = targetSantri.filter(s => {
+            let halaqahSantri = String(s.halaqah || s.HALAQAH || '').trim().toLowerCase();
+            return halaqahSantri.includes(namaLogin) || namaLogin.includes(halaqahSantri);
+        });
+        
+        if (filterVal && filterVal !== 'ALL') {
+            targetSantri = targetSantri.filter(s => String(s.kelas || s.KELAS).trim() === filterVal);
+        }
+    } else {
+        if (filterVal && filterVal !== 'ALL') {
+            targetSantri = targetSantri.filter(s => String(s.kelas || s.KELAS).trim() === filterVal);
+        }
+    }
+
+    // Kelompokkan santri berdasarkan kategorinya untuk ditampilkan di tooltip
+    let kategoriMurid = {
+        selesai: [],
+        proses: [],
+        dibawah90: [],
+        belum: []
+    };
+
+    targetSantri.forEach(s => {
+        let nama = s.nama_santri || s.nama || s.NAMA_SANTRI || 'Tanpa Nama';
+        let valStr = String(s.nilai_target || s.NILAI_TARGET || s.Nilai_Target || s['Nilai Target'] || s.target || '0').replace('%', '').replace(',', '.');
+        let val = parseFloat(valStr);
+        if (val > 0 && val <= 1) val = val * 100;
+        
+        if (isNaN(val) || val === 0) {
+            kategoriMurid.belum.push(nama);
+        } else if (val >= 100) {
+            kategoriMurid.selesai.push(nama);
+        } else if (val >= 90 && val < 100) {
+            kategoriMurid.proses.push(nama);
+        } else {
+            kategoriMurid.dibawah90.push(nama);
+        }
+    });
+
+    const labelColor = state.isDarkMode ? '#f1f5f9' : '#374151';
+
+    window.adminChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Target Selesai (100)', '90-99', 'Di bawah 90', 'Belum Diset'],
+            datasets: [{
+                data: [kategoriMurid.selesai.length, kategoriMurid.proses.length, kategoriMurid.dibawah90.length, kategoriMurid.belum.length],
+                backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#9CA3AF'], 
+                borderWidth: 2,
+                borderColor: state.isDarkMode ? '#0a1919' : '#ffffff',
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { font: { size: 10, family: "'Poppins', sans-serif" }, color: labelColor, usePointStyle: true, padding: 15 }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].label;
+                        },
+                        label: function(context) {
+                            const index = context.dataIndex;
+                            let listNama = [];
+                            if (index === 0) listNama = kategoriMurid.selesai;
+                            else if (index === 1) listNama = kategoriMurid.proses;
+                            else if (index === 2) listNama = kategoriMurid.dibawah90;
+                            else if (index === 3) listNama = kategoriMurid.belum;
+
+                            return `Jumlah: ${listNama.length} Murid`;
+                        },
+                        footer: function(tooltipItems) {
+                            const index = tooltipItems[0].dataIndex;
+                            let listNama = [];
+                            if (index === 0) listNama = kategoriMurid.selesai;
+                            else if (index === 1) listNama = kategoriMurid.proses;
+                            else if (index === 2) listNama = kategoriMurid.dibawah90;
+                            else if (index === 3) listNama = kategoriMurid.belum;
+
+                            if (listNama.length === 0) return ['(Tidak ada murid)'];
+                            
+                            // Mengembalikan array agar Chart.js merender setiap nama murid ke baris baru ke bawah
+                            let lines = ['---'];
+                            listNama.forEach((nama, idx) => {
+                                lines.push(`${idx + 1}. ${nama}`);
+                            });
+                            return lines;
+                        }
+                    }
+                }
+            }
+        }
+    });
+};
+
+// ==========================================
+// 3. CORE RENDERERS & SWITCH TAB
+// ==========================================
+window.switchTab = function(tabName) { state.activeTab = tabName; window.renderApp(); };
+window.switchTabOrtu = function(tabName) { state.activeTabOrtu = tabName; window.renderApp(); };
+
+window.renderApp = function() {
+  const root = document.getElementById('app-root');
+  const wrapper = document.getElementById('blogger-app-override');
+  
+  if (!state.user) { 
+    if(wrapper) wrapper.classList.remove('admin-landscape');
+    root.innerHTML = window.renderLogin(); 
+  } else {
+    const roleUser = String(state.user.role || '').trim().toLowerCase();
+    const isSuperAdmin = window.isKoordinator();
+    
+    if (isSuperAdmin && wrapper) {
+        wrapper.classList.add('admin-landscape');
+    } else if(wrapper) {
+        wrapper.classList.remove('admin-landscape');
+    }
+
+    if (roleUser === 'ustadz' || roleUser === 'admin') { 
+      root.innerHTML = window.renderUstadzDashboard(); 
+      if(state.activeTab === 'input-setoran' || state.activeTab === 'rapor-biru') window.populateSantriSelect(); 
+      if(state.activeTab === 'beranda') setTimeout(() => window.updateAdminChart('ALL'), 150);
+    } else { 
+      if(wrapper) wrapper.classList.remove('admin-landscape');
+      root.innerHTML = window.renderOrtuDashboard(); 
+      if(state.activeTabOrtu === 'beranda') setTimeout(() => window.initOrtuChart(), 100); 
+    }
+  }
+};
+
+window.renderLoading = function() { return `<div class="flex flex-col items-center justify-center h-full min-h-[300px]"><div class="loader mb-4"></div><p class="text-[#044343] font-medium text-sm">Memuat data...</p></div>`; };
+window.getWatermark = function() { return `<div class="mt-8 text-center pb-28"><p class="text-[10px] text-gray-500 font-semibold tracking-wide uppercase">${state.pengaturan?.nama_lembaga || 'SDIT DARUSSAKINAH BATAM'}<br/>2026/2027.</p></div>`; };
+
+// ==========================================
+// 4. LOGIN & DASHBOARD RENDERS
+// ==========================================
+window.renderLogin = function() {
+  const logoTampil = state.pengaturan?.logo || "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhAGtD9h5dHK-e9_xWPzPgM-FEGXjeuxz0yrFWKoyOzqqBTgKiFTgOuJH_h92F1zhGNF2iLDdsSGKoBxqjuyZLxNobXz14pSIxRnyBHa4YXQx5M0GahCR0wLkzEZZGHYQ5jJjIu8FlFs1Rk-1jhQv7n-qyTpaSeFF2O0a6vuug58m7t5NJSqvs33QfL92s/s320/LOGO%20SD%20DS%20NEW.png";
+  return `
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=swap');
+      .text-gold-gradient { background: linear-gradient(to bottom right, #B8860B, #FFD700, #DAA520); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+      .islamic-circle-frame { background: linear-gradient(135deg, #FFF8DC 0%, #F5DEB3 50%, #DAA520 100%); border: 4px solid #FFD700; border-radius: 50%; box-shadow: 0 10px 25px rgba(212, 175, 55, 0.35), inset 0 0 12px rgba(255, 255, 255, 0.7); position: relative; }
+    </style>
+    <div class="login-screen h-full w-full relative bg-[#F4EFE6] flex flex-col justify-center items-center overflow-hidden pb-12 pt-6">
+      
+      <button onclick="window.toggleDarkMode()" class="absolute top-5 right-5 z-30 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-amber-500 shadow-sm transition-transform active:scale-95 border border-[#D4AF37]/30 backdrop-blur-md" title="Ubah Tema">
+        <i class="fas ${state.isDarkMode ? 'fa-sun text-yellow-400' : 'fa-moon text-[#023131]'} text-sm"></i>
+      </button>
+
+      <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute -top-[15%] -right-[20%] w-[70%] h-[50%] rounded-full bg-gradient-to-b from-[#D4AF37]/20 to-transparent blur-[60px] opacity-70"></div>
+        <div class="absolute -bottom-[15%] -left-[20%] w-[80%] h-[60%] rounded-full bg-gradient-to-t from-[#044343]/15 to-transparent blur-[70px] opacity-80"></div>
+        <div class="absolute inset-4 border border-[#D4AF37]/30 rounded-[28px] z-0"></div>
+        <div class="absolute inset-[22px] border border-[#D4AF37]/15 rounded-[22px] z-0"></div>
+      </div>
+
+      <div class="relative z-20 w-full max-w-md px-8 flex flex-col items-center mt-6">
+        <div class="islamic-circle-frame w-32 h-32 flex items-center justify-center mb-6 p-2.5"><div class="w-full h-full rounded-full bg-white flex items-center justify-center p-1.5 shadow-inner border border-[#D4AF37]/60"><img src="${logoTampil}" class="w-full h-full object-contain rounded-full" alt="Logo"></div></div>
+        <div class="text-center mb-8 w-full">
+          <h2 class="text-sm sm:text-base font-bold text-[#023131] tracking-widest uppercase" style="font-family: 'Playfair Display', serif;">MUTABA'AH HAFALAN</h2>
+          <h1 class="text-2xl sm:text-[24px] font-extrabold text-gold-gradient mt-1.5 tracking-tight drop-shadow-sm" style="font-family: 'Playfair Display', serif;">SDIT DARUSSAKINAH BATAM</h1>
+          <p class="text-[11px] font-bold text-[#023131] tracking-wider uppercase mt-1">TAHUN AJAR 2026/2027</p>
+          <div class="flex items-center justify-center gap-3 my-4"><div class="h-[1px] w-12 sm:w-16 bg-gradient-to-r from-transparent to-[#D4AF37]"></div><div class="w-1.5 h-1.5 rotate-45 border border-[#D4AF37] p-[1px]"><div class="w-full h-full bg-[#D4AF37]"></div></div><div class="h-[1px] w-12 sm:w-16 bg-gradient-to-l from-transparent to-[#D4AF37]"></div></div>
+          <p class="text-[14px] font-bold text-[#023131]">Selamat datang,</p><p class="text-[11px] sm:text-xs text-gray-600 mt-1 leading-relaxed">Silakan masuk untuk mengakses<br/>aplikasi rekap hafalan.</p>
+        </div>
+        <div id="login-error" class="hidden mb-4 p-3 bg-red-50 text-red-600 text-xs font-medium rounded-xl text-center border border-red-100 w-full"></div>
+        <form onsubmit="window.handleLogin(event)" class="space-y-4 w-full">
+          <div class="relative bg-white/90 backdrop-blur rounded-2xl border border-gray-200 shadow-sm focus-within:border-[#D4AF37] focus-within:shadow-md transition-all"><div class="absolute left-4 top-[17px] text-[#D4AF37] text-lg"><i class="fas fa-user"></i></div><input type="text" id="username" class="w-full bg-transparent pl-12 pr-4 py-4 text-sm focus:ring-0 rounded-2xl outline-none text-gray-800 placeholder-gray-400 font-semibold" placeholder="Username" required></div>
+          <div class="relative bg-white/90 backdrop-blur rounded-2xl border border-gray-200 shadow-sm focus-within:border-[#D4AF37] focus-within:shadow-md transition-all"><div class="absolute left-4 top-[17px] text-[#D4AF37] text-lg"><i class="fas fa-lock"></i></div><input type="password" id="password" class="w-full bg-transparent pl-12 pr-12 py-4 text-sm focus:ring-0 rounded-2xl outline-none text-gray-800 placeholder-gray-400 font-semibold" placeholder="Password" required><button type="button" onclick="window.togglePassword()" class="absolute right-4 top-[17px] text-[#D4AF37] hover:text-[#023131] outline-none transition-colors text-lg"><i class="fas fa-eye" id="toggle-icon"></i></button></div>
+          <button type="submit" id="btn-login" class="w-full bg-gradient-to-r from-[#023131] via-[#045252] to-[#023131] text-[#F5D880] border border-[#D4AF37]/50 font-bold py-4 rounded-xl shadow-[0_8px_15px_rgba(2,49,49,0.3)] btn-active mt-2 text-sm transition-all tracking-widest flex items-center justify-center gap-2">
+            MASUK
+          </button>
+        </form>
+      </div>
+    </div>
+  `;
+};
+
+const renderWaktuSalat = (timings) => {
+  return `
+    <div class="bg-gradient-to-br from-[#023131] to-[#044343] p-4 rounded-3xl border border-[#D4AF37]/30 shadow-xl mb-6">
+      <div class="flex items-center justify-between mb-3 border-b border-[#D4AF37]/20 pb-2"><span class="text-[#D4AF37] font-bold text-xs tracking-widest uppercase">Jadwal Salat (Batam)</span><i class="fas fa-mosque text-[#D4AF37]"></i></div>
+      <div class="grid grid-cols-5 gap-1 text-center">
+        ${['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map(waktu => `<div class="flex flex-col"><span class="text-[9px] text-gray-300 uppercase">${waktu === 'Fajr' ? 'Subuh' : waktu === 'Dhuhr' ? 'Dzuhur' : waktu === 'Asr' ? 'Ashar' : waktu === 'Maghrib' ? 'Maghrib' : 'Isha'}</span><span class="text-[11px] font-bold text-white mt-0.5">${timings[waktu]}</span></div>`).join('')}
+      </div>
+    </div>
+  `;
+};
+
+window.renderUstadzDashboard = function() {
+  let bodyContent = '';
+  if (state.activeTab === 'beranda') bodyContent = window.renderBeranda();
+  else if (state.activeTab === 'input-setoran') bodyContent = window.renderInputSetoran();
+  else if (state.activeTab === 'data-kelas') bodyContent = window.renderDataKelas();
+  else if (state.activeTab === 'pengaturan') bodyContent = window.renderPengaturan();
+  else if (state.activeTab === 'data-ustadz') bodyContent = window.renderDataUstadz();
+  else if (state.activeTab === 'mutabaah-ustadz') bodyContent = window.renderMutabaahUstadz(); 
+  else if (state.activeTab === 'data-santri') bodyContent = window.renderDataSantri(); 
+  else if (state.activeTab === 'data-login-murid') bodyContent = window.renderDataLoginMurid(); 
+  else if (state.activeTab === 'rapor-biru') bodyContent = window.renderRaporBiruForm();
+  else if (state.activeTab === 'riwayat-rapor') bodyContent = window.renderRiwayatRaporTahfidz(); 
+  else bodyContent = window.renderRiwayatUstadz();
+
+  const isInputActive = state.activeTab === 'input-setoran' || state.activeTab === 'rapor-biru';
+  const isRiwayatActive = state.activeTab === 'riwayat' || state.activeTab === 'riwayat-rapor';
+  const isBerandaActive = state.activeTab === 'beranda';
+
+  return `
+    <main class="flex-grow pb-36 overflow-y-auto w-full h-full bg-[#F4EFE6] relative">
+      ${state.isLoading ? window.renderLoading() : bodyContent} 
+      ${!state.isLoading ? window.getWatermark() : ''}
+    </main>
+    <nav class="floating-nav">
+      <button type="button" onclick="window.switchTab('input-setoran')" class="flex flex-col items-center justify-center w-1/3 h-full gap-0.5 btn-active transition-colors ${isInputActive ? 'text-[#044343]' : 'text-[#B8860B]'}">
+        <div class="transition-all duration-300 transform ${isInputActive ? 'scale-125' : 'scale-100'} drop-shadow-sm">
+          <i class="fas fa-edit text-[22px]"></i>
+        </div>
+        <span class="text-[10px] font-bold tracking-wide mt-1">Input</span>
+      </button>
+
+      <button type="button" onclick="window.switchTab('beranda')" class="flex flex-col items-center justify-center w-1/3 h-full relative btn-active group -top-3">
+        <div class="w-16 h-16 rounded-full ${isBerandaActive ? 'bg-[#044343] text-[#F5D880]' : 'bg-gradient-to-tr from-[#FFFDF9] via-[#FDF8EC] to-[#F7EFCF] text-[#B8860B]'} flex items-center justify-center shadow-[0_8px_20px_rgba(212,175,55,0.3)] border-4 border-[#B8860B] transition-transform active:scale-95">
+          <i class="fas fa-home text-2xl" style="${isBerandaActive ? 'color: #F5D880;' : 'color: #9A7B0C;'}"></i>
+        </div>
+        <span class="text-[10px] font-bold tracking-wide mt-0.5 text-[#9A7B0C]">Beranda</span>
+      </button>
+
+      <button type="button" onclick="window.switchTab('riwayat')" class="flex flex-col items-center justify-center w-1/3 h-full gap-0.5 btn-active transition-colors ${isRiwayatActive ? 'text-[#044343]' : 'text-[#B8860B]'}">
+        <div class="transition-all duration-300 transform ${isRiwayatActive ? 'scale-125' : 'scale-100'} drop-shadow-sm">
+          <i class="fas fa-history text-[22px]"></i>
+        </div>
+        <span class="text-[10px] font-bold tracking-wide mt-1">Riwayat</span>
+      </button>
+    </nav>
+  `;
+};
+
+window.renderBeranda = function() {
+  let p = state.pengaturan || {};
+  let htmlJadwalSalat = state.waktuSalat ? renderWaktuSalat(state.waktuSalat) : `<div class="bg-white p-4 rounded-2xl text-center text-xs text-gray-400 mb-6 border border-gray-100 shadow-sm"><i class="fas fa-circle-notch fa-spin mr-1"></i> Memuat jadwal salat...</div>`;
+
+  const namaLogin = String(state.user.nama_lengkap || '').trim().toLowerCase();
+  const usernameLogin = String(state.user.username || '').trim().toLowerCase();
+  const isSuperAdmin = usernameLogin === 'admin' || namaLogin === 'fadhl al harits' || namaLogin === 'admin';
+
+  let myStudents = state.santri;
+  if (!isSuperAdmin) {
+      myStudents = state.santri.filter(s => {
+          let halaqahSantri = String(s.halaqah || s.HALAQAH || '').trim().toLowerCase();
+          return halaqahSantri.includes(namaLogin) || namaLogin.includes(halaqahSantri);
+      });
+  }
+
+  let myStudentsCount = myStudents.length;
+  let listKelas = [...new Set(myStudents.map(s => String(s.kelas || s.KELAS).trim()))].filter(Boolean).sort();
+  let listKelasGlobal = [...new Set((state.santri || []).map(s => String(s.kelas || s.KELAS).trim()))].filter(Boolean).sort();
+  
+  let chartTitle = isSuperAdmin ? "Capaian Target Murid SDIT" : `Capaian Target Halaqah`;
+  
+  let optionsKelasHtml = isSuperAdmin 
+    ? `<option value="ALL">Semua SDIT</option>` + listKelasGlobal.map(k => `<option value="${k}">${k}</option>`).join('')
+    : `<option value="ALL">Semua Kelas Asuhan</option>` + listKelas.map(k => `<option value="${k}">${k}</option>`).join('');
+
+  let chartFilterHtml = `
+      <select id="admin-chart-filter" onchange="window.updateAdminChart(this.value)" class="text-[10px] bg-[#F4EFE6] border border-gray-200 rounded-lg px-2 py-1.5 outline-none font-bold text-[#044343]">
+        ${optionsKelasHtml}
+      </select>
+  `;
+
+ let chartHtml = `
+  <div class="bg-white rounded-3xl p-5 shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-6 mt-5">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-sm font-bold text-gray-800"><i class="fas fa-chart-pie text-[#044343] mr-2"></i> ${chartTitle}</h3>
+      ${chartFilterHtml}
+    </div>
+    <div class="relative h-44 w-full"><canvas id="adminChart"></canvas></div>
+  </div>
+  `;
+
+  return `
+    <div class="px-5 pt-6 pb-24">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <p class="text-xs text-gray-600 font-medium mb-0.5">Assalamu'alaikum,</p>
+          <h2 class="text-lg font-bold text-[#044343] leading-tight">Ahlan Wasahlan, ${state.user.nama_lengkap}</h2>
+          <p class="text-[10px] text-gray-500 font-medium uppercase tracking-wider">${p.nama_lembaga || 'SDIT DARUSSAKINAH BATAM'}</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="window.toggleDarkMode()" class="text-gray-500 hover:text-[#D4AF37] transition-colors" title="Ganti Tema">
+            <i class="fas ${state.isDarkMode ? 'fa-sun text-yellow-400' : 'fa-moon'} text-lg"></i>
+          </button>
+          <button onclick="window.handleLogout()" class="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center border border-red-600 hover:bg-red-600 transition-colors shadow-md" title="Keluar"><i class="fas fa-sign-out-alt text-sm"></i></button>
+        </div>
+      </div>
+
+      <!-- KONTROL UTAMA: DIBAGI 2 KOLOM (KIRI & KANAN) DI LAYAR LAPTOP -->
+      <div class="admin-grid-layout">
+        
+        <!-- KOLOM KIRI -->
+        <div class="space-y-4">
+          ${htmlJadwalSalat}
+          
+          <div class="bg-gradient-to-br from-[#064e3b] to-[#022c22] rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+            <div class="absolute right-[-20px] bottom-[-20px] opacity-10 pointer-events-none"><i class="fas fa-mosque text-[130px] text-white"></i></div>
+            <div class="relative z-10">
+              <div class="flex items-center gap-2 mb-3"><div class="w-7 h-7 bg-[#D4AF37]/20 rounded-full flex items-center justify-center text-[#D4AF37]"><i class="fas fa-school text-xs"></i></div><h3 class="text-sm font-semibold text-white tracking-wide">Profil Sekolah</h3><button onclick="${window.isKoordinator() ? "window.switchTab('pengaturan')" : "Swal.fire('Info', 'Menu ini untuk Admin.', 'info')"}" class="ml-auto text-white/70 hover:text-white"><i class="fas fa-chevron-right text-xs"></i></button></div>
+              <div class="space-y-2.5 mt-3 text-[11px] text-emerald-100">
+                <div class="flex items-start gap-2.5"><i class="fas fa-user-tie mt-0.5 text-[#D4AF37] w-3 text-center"></i><div><p class="text-white/60 text-[9px] uppercase tracking-wider">Kepala Sekolah</p><p class="font-medium text-white">${p.nama_pimpinan || '-'}</p></div></div>
+                <div class="flex items-start gap-2.5"><i class="fas fa-user-check mt-0.5 text-[#D4AF37] w-3 text-center"></i><div><p class="text-white/60 text-[9px] uppercase tracking-wider">Koordinator Tahsin/Tahfidz</p><p class="font-medium text-white">${p.nama_koordinator || '-'}</p></div></div>
+              </div>
+              <div class="mt-4 bg-white/10 backdrop-blur-md rounded-xl p-2 inline-flex items-center gap-2 border border-white/10"><i class="far fa-calendar-alt text-[#D4AF37] text-xs"></i><div><p class="text-[8px] text-white/70 leading-none">Hari ini</p><p class="text-[10px] font-medium text-white leading-none mt-1">${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p></div></div>
+            </div>
+          </div>
+
+          <!-- Statistik Data dibuat grid 4 kolom persegi -->
+          <div>
+            <h3 class="text-sm font-bold text-gray-800 mb-2">Statistik Data</h3>
+            <div class="grid grid-cols-4 gap-2">
+              <div onclick="window.switchTab('data-ustadz')" class="bg-white rounded-2xl aspect-square p-1 flex flex-col items-center justify-center shadow-sm border border-gray-100 cursor-pointer hover:border-[#044343]/30 transition-all text-center">
+                  <div class="w-6 h-6 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-1.5"><i class="fas fa-user-tie text-[10px]"></i></div>
+                  <p class="text-[11px] font-bold text-gray-800 leading-none mb-0.5">${state.ustadz.length}</p>
+                  <p class="text-[8px] font-medium text-gray-500 leading-tight">Asatidz</p>
+              </div>
+              <div onclick="window.switchTab('rapor-biru')" class="bg-white rounded-2xl aspect-square p-1 flex flex-col items-center justify-center shadow-sm border border-gray-100 cursor-pointer hover:border-[#044343]/30 transition-all text-center">
+                  <div class="w-6 h-6 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mb-1.5"><i class="fas fa-award text-[10px]"></i></div>
+                  <p class="text-[11px] font-bold text-[#044343] leading-none mb-0.5">Input</p>
+                  <p class="text-[8px] font-medium text-gray-500 leading-tight">Rapor</p>
+              </div>
+              <div onclick="window.switchTab('data-santri')" class="bg-white rounded-2xl aspect-square p-1 flex flex-col items-center justify-center shadow-sm border border-gray-100 cursor-pointer hover:border-[#044343]/30 transition-all text-center">
+                  <div class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mb-1.5"><i class="fas fa-chart-line text-[10px]"></i></div>
+                  <p class="text-[11px] font-bold text-gray-800 leading-none mb-0.5">${state.santri.length}</p>
+                  <p class="text-[8px] font-medium text-gray-500 leading-tight">Target</p>
+              </div>
+              <div onclick="window.switchTab('data-login-murid')" class="bg-white rounded-2xl aspect-square p-1 flex flex-col items-center justify-center shadow-sm border border-gray-100 cursor-pointer hover:border-[#044343]/30 transition-all text-center">
+                  <div class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mb-1.5"><i class="fas fa-user-graduate text-[10px]"></i></div>
+                  <p class="text-[11px] font-bold text-gray-800 leading-none mb-0.5">${myStudentsCount}</p>
+                  <p class="text-[8px] font-medium text-gray-500 leading-tight">Akun</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KOLOM KANAN -->
+        <div class="space-y-4 max-[900px]:mt-6">
+          
+          <div class="bg-gradient-to-r from-[#1e3a8a] to-[#4338ca] rounded-3xl p-4 text-white shadow-lg relative overflow-hidden">
+            <div class="relative z-10">
+              <div class="flex justify-between items-start mb-1"><h3 class="text-xs font-semibold flex items-center gap-1.5"><i class="fas fa-bullhorn text-[#D4AF37]"></i> Pengumuman Terbaru</h3><button onclick="window.openModal('modal-pengumuman')" class="text-[10px] text-white/80 hover:text-white">Lihat <i class="fas fa-arrow-right text-[8px]"></i></button></div>
+              <p class="text-xs text-blue-100 font-medium truncate">${state.pengumuman || "Belum ada pengumuman baru."}</p>
+            </div>
+          </div>
+
+          ${chartHtml}
+
+          <div class="bg-white rounded-3xl p-3 shadow-2xs border border-gray-100">
+            <button onclick="window.switchTab('mutabaah-ustadz')" class="w-full flex items-center justify-between p-2.5 hover:bg-gray-50 rounded-xl transition-colors border-b border-gray-50">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center"><i class="fas fa-tasks text-xs"></i></div>
+                <span class="text-xs font-semibold text-gray-700">Mutaba'ah Murid</span>
+              </div>
+              <i class="fas fa-chevron-right text-[10px] text-gray-300"></i>
+            </button>
+            <button onclick="window.switchTab('riwayat-rapor')" class="w-full flex items-center justify-between p-2.5 hover:bg-gray-50 rounded-xl transition-colors border-b border-gray-50 mt-1">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fas fa-clipboard-list text-xs"></i></div>
+                <span class="text-xs font-semibold text-gray-700">Riwayat Nilai Surat</span>
+              </div>
+              <i class="fas fa-chevron-right text-[10px] text-gray-300"></i>
+            </button>
+            <button onclick="${window.isKoordinator() ? "window.switchTab('pengaturan')" : "Swal.fire('Info', 'Menu Pengaturan khusus Admin.', 'info')"}" class="w-full flex items-center justify-between p-2.5 hover:bg-gray-50 rounded-xl transition-colors mt-1">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center"><i class="fas fa-cog text-xs"></i></div>
+                <span class="text-xs font-semibold text-gray-700">Pengaturan Sistem</span>
+              </div>
+              <i class="fas fa-chevron-right text-[10px] text-gray-300"></i>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  `;
+};
+window.renderRiwayatRaporTahfidz = function() {
+  let listRapor = state.raporBiru || [];
+  
+  const namaLogin = String(state.user.nama_lengkap || '').trim().toLowerCase();
+  const isSuperAdmin = state.user.username.toLowerCase() === 'admin' || namaLogin === 'fadhl al harits' || namaLogin === 'admin';
+  
+  let baseFilteredRapor = listRapor;
+  if (!isSuperAdmin) {
+     baseFilteredRapor = listRapor.filter(r => {
+        let santriObj = state.santri.find(s => String(s.nama_santri || s.nama || s.NAMA_SANTRI).trim().toLowerCase() === String(r.nama_santri).trim().toLowerCase());
+        if (!santriObj) return false;
+        let halaqahSantri = String(santriObj.halaqah || santriObj.HALAQAH || '').trim().toLowerCase();
+        return halaqahSantri.includes(namaLogin) || namaLogin.includes(halaqahSantri);
+     });
+  }
+
+  let listSantriDropdown = [...new Set(baseFilteredRapor.map(r => String(r.nama_santri || r.NAMA_SANTRI).trim()))].filter(Boolean).sort();
+
+  let finalFilteredRapor = baseFilteredRapor;
+  if (state.filterRiwayatRaporSantri) {
+      finalFilteredRapor = baseFilteredRapor.filter(r => String(r.nama_santri || r.NAMA_SANTRI).trim() === state.filterRiwayatRaporSantri);
+  }
+
+  let cards = finalFilteredRapor.map(r => `
+    <div class="bg-white p-4 rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-4 riwayat-card">
+      <div class="flex justify-between items-start mb-2">
+        <div>
+          <h4 class="font-bold text-sm text-[#044343]">${r.nama_santri || 'Santri'}</h4>
+        </div>
+        <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+          ${r.nama_surat || 'Surat'}
+        </span>
+      </div>
+      <div class="bg-[#F4EFE6] p-3 rounded-2xl border border-gray-200/60 text-xs space-y-1.5 my-2">
+        <div class="flex justify-between text-gray-700 items-center mb-1">
+          <span class="text-[10px] font-bold">Nilai Akhir:</span>
+          <span class="font-black text-sm text-[#044343]">${r.rata_rata || 0}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1 pt-2 border-t border-gray-200 text-center">
+          <div class="bg-white p-1.5 rounded-xl border border-gray-200">
+            <p class="text-[9px] text-gray-400 uppercase">Hafalan</p>
+            <p class="font-bold text-rose-600">${r.salah_hafalan || 0}</p>
+          </div>
+          <div class="bg-white p-1.5 rounded-xl border border-gray-200">
+            <p class="text-[9px] text-gray-400 uppercase">Tajwid</p>
+            <p class="font-bold text-rose-600">${r.salah_tajwid || 0}</p>
+          </div>
+          <div class="bg-white p-1.5 rounded-xl border border-gray-200">
+            <p class="text-[9px] text-gray-400 uppercase">Makhroj</p>
+            <p class="font-bold text-rose-600">${r.salah_makhroj || 0}</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-between text-[10px] text-gray-400 pt-1">
+        <span><i class="far fa-calendar-alt text-[#044343]"></i> ${r.tanggal || '-'}</span>
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="px-5 pt-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-[#044343] leading-tight">Riwayat Rapor Tahfidz</h2>
+        <button onclick="window.switchTab('beranda')" class="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:text-[#044343] shadow-sm transition-colors"><i class="fas fa-arrow-left text-xs"></i></button>
+      </div>
+
+      <div class="relative mb-3">
+        <select onchange="window.handleFilterRiwayatRapor(this.value)" class="w-full bg-white border border-gray-100 rounded-2xl pl-4 pr-10 py-3 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700 font-semibold appearance-none">
+          <option value="">-- Semua Murid --</option>
+          ${listSantriDropdown.map(name => `<option value="${name}" ${state.filterRiwayatRaporSantri === name ? 'selected' : ''}>${name}</option>`).join('')}
+        </select>
+        <i class="fas fa-chevron-down absolute right-4 top-3.5 text-gray-400 text-xs pointer-events-none"></i>
+      </div>
+
+      <div class="relative mb-5">
+        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i>
+        <input type="text" onkeyup="window.searchData('.riwayat-card', this.value)" placeholder="Cari nama murid / surat..." class="w-full bg-white border border-gray-100 rounded-2xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700">
+      </div>
+      <div>${cards || `<div class="text-center p-8 bg-white rounded-3xl border border-gray-100 text-gray-400 text-xs">Belum ada nilai surat yang tersimpan.</div>`}</div>
+    </div>
+  `;
+};
+
+window.handleFilterRiwayatRapor = function(val) {
+    state.filterRiwayatRaporSantri = val;
+    window.renderApp();
+};
+
+window.renderRaporBiruForm = function() {
+  let listKelas = [...new Set((state.santri || []).map(s => s.kelas || s.KELAS).filter(Boolean))].sort();
+  let optSurahRapor = [
+    [114, "An-Nas (النَّاس)", 4], [113, "Al-Falaq (الفَلَق)", 5], [112, "Al-Ikhlas (الإِخْلاَص)", 4],
+    [111, "Al-Lahab (المَسَد)", 5], [110, "An-Nasr (النَّصْر)", 4], [109, "Al-Kafirun (الكَافِرُوْن)", 5],
+    [108, "Al-Kautsar (الكَوْثَر)", 3], [107, "Al-Ma'un (المَاعُوْن)", 6], [106, "Quraisy (قُرَيْش)", 5],
+    [105, "Al-Fil (الفِيْل)", 5], [104, "Al-Humazah (الهُمَزَة)", 6], [103, "Al-Asr (العَصْر)", 3],
+    [102, "At-Takasur (التَّكَاثُر)", 5], [101, "Al-Qari'ah (القَارِعَة)", 5], [100, "Al-'Adiyat (العَادِيَات)", 7],
+    [99, "Al-Zalzalah (الزَّلْزَلَة)", 5], [98, "Al-Bayyinah (البَيِّنَة)", 8], [97, "Al-Qadr (القَدْر)", 5],
+    [96, "Al-'Alaq (العَلَق)", 11], [95, "At-Tin (التِّيْن)", 5], [94, "Asy-Syarh (الشَّرح)", 5],
+    [93, "Ad-Duha (الضُّحَى)", 7], [92, "Al-Lail (اللَّيْل)", 10], [91, "Asy-Syams (الشَّمْس)", 10],
+    [90, "Al-Balad (البَلَد)", 7], [89, "Al-Fajr (الفَجْر)", 14], [88, "Al-Ghasyiyah (الغَاشِيَة)", 10],
+    [87, "Al-A'la (الأَعْلَى)", 10], [86, "At-Tariq (الطَّارِق)", 8], [85, "Al-Buruj (الْبُرُوج)", 13], 
+    [84, "Al-Insyiqaq (الانْشِقَاق)", 13], [83, "Al-Mutaffifin (الْمُطَفِّفِين)", 23], [82, "Al-Infitar (الانْفِطَار)", 9], 
+    [81, "At-Takwir (التَّكْوِير)", 12], [80, "'Abasa (عَبَسَ)", 15], [79, "An-Nazi'at (النَّازِعَات)", 20], 
+    [78, "An-Naba' (النَّبَأ)", 21], [77, "Al-Mursalat (الْمُرْسَلَات)", 23], [76, "Al-Insan (الْإِنْسَان)", 30], 
+    [75, "Al-Qiyamah (الْقِيَامَة)", 18], [74, "Al-Muddassir (الْمُدَّثِّر)", 32], [73, "Al-Muzzammil (الْمُزَّمِّل)", 18], 
+    [72, "Al-Jinn (الْجِنّ)", 28], [71, "Nuh (نُوح)", 22], [70, "Al-Ma'arij (الْمَعَارِج)", 27], 
+    [69, "Al-Haqqah (الْحَاقَّة)", 32], [68, "Al-Qalam (الْقَلَم)", 34], [67, "Al-Mulk (الْمُلْك)", 39], 
+    [66, "At-Tahrim (التَّحْرِيم)", 30], [65, "At-Talaq (الطَّلَاق)", 30], [64, "At-Tagabun (التَّغَابُن)", 28], 
+    [63, "Al-Munafiqun (الْمُنَافِقُون)", 18], [62, "Al-Jumu'ah (الْجُمُعَة)", 16], [61, "As-Saff (الصَّفّ)", 20], 
+    [60, "Al-Mumtahanah (الْمُمْتَحَنَة)", 38], [59, "Al-Hasyr (الْحَشْر)", 50], [58, "Al-Mujadilah (الْمُجَادِلَة)", 50], 
+    [57, "Al-Hadid (الْحَدِيد)", 65], [56, "Al-Waqi'ah (الْوَاقِعَة)", 48], [55, "Ar-Rahman (الرَّحْمَن)", 45], 
+    [54, "Al-Qamar (الْقَمَر)", 45], [53, "An-Najm (النَّجْم)", 35], [52, "At-Tur (الطُّور)", 35], 
+    [51, "Az-Zariyat (الذَّارِيَات)", 45], [50, "Qaf (ق)", 40], [49, "Al-Hujurat (الْحُجُرَات)", 35], 
+    [48, "Al-Fath (الْفَتْح)", 55], [47, "Muhammad (مُحَمَّد)", 58], [46, "Al-Ahqaf (الْأَحْقَاف)", 65], 
+    [45, "Al-Jasiyah (الْجَاثِيَة)", 50], [44, "Ad-Dukhan (الدُّخَان)", 40], [43, "Az-Zukhruf (الزُّخْرُف)", 95], 
+    [42, "Asy-Syura (الشُّورَى)", 90], [41, "Fussilat (فُصِّلَت)", 85], [40, "Ghafir (غَافِر)", 135], 
+    [39, "Az-Zumar (الزُّمَر)", 135]
+  ].map((s, idx) => `<option value="${idx}" data-no="${s[0]}" data-nama="${s[1]}" data-baris="${s[2]}">${s[0]}. ${s[1]} (${s[2]} baris)</option>`).join('');
+
+  return `
+    <div class="px-5 pt-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-[#044343] leading-tight">Input Rapor Tahfidz</h2>
+        <button onclick="window.switchTab('beranda')" class="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:text-[#044343] shadow-sm transition-colors"><i class="fas fa-arrow-left text-xs"></i></button>
+      </div>
+      <div class="bg-white rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 p-5">
+        <form onsubmit="window.handleSimpanRaporBiru(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Pilih Kelas</label>
+            <select id="rb-kelas" onchange="window.updateRbSantri(this.value)" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3.5 text-xs text-gray-700 outline-none focus:border-[#044343] appearance-none font-medium" required>
+              <option value="">-- Pilih Kelas --</option>
+              ${listKelas.map(k => `<option value="${k}">${k}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Nama Santri</label>
+            <select id="rb-santri" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3.5 text-sm focus:border-[#044343] outline-none font-semibold text-gray-800 appearance-none" required>
+              <option value="">-- Pilih Kelas Dahulu --</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Pilih Surat</label>
+            <select id="rb-surat" onchange="window.updateRbBaris(this)" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3.5 text-sm focus:border-[#044343] outline-none font-semibold text-gray-800 appearance-none" required>
+              <option value="">-- Pilih Surat --</option>
+              ${optSurahRapor}
+            </select>
+          </div>
+          <div class="bg-[#F4EFE6] p-3 rounded-xl text-xs text-gray-600 flex justify-between items-center">
+            <span>Standar Baris Surat:</span>
+            <span id="rb-info-baris" class="font-bold text-gray-800 text-sm">- baris</span>
+          </div>
+          <input type="hidden" id="rb-jumlah-baris">
+          <input type="hidden" id="rb-no-surat">
+          <input type="hidden" id="rb-nama-surat">
+
+          <hr class="border-gray-100 my-2">
+          <p class="text-xs font-bold text-rose-600 uppercase tracking-wider">Masukkan Jumlah Kesalahan:</p>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600 mb-1 text-center">Hafalan</label>
+              <input type="number" id="rb-salah-hafalan" value="0" min="0" required class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-center text-sm font-bold text-gray-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600 mb-1 text-center">Tajwid</label>
+              <input type="number" id="rb-salah-tajwid" value="0" min="0" required class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-center text-sm font-bold text-gray-800 outline-none">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600 mb-1 text-center">Makhroj</label>
+              <input type="number" id="rb-salah-makhroj" value="0" min="0" required class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-center text-sm font-bold text-gray-800 outline-none">
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-[#044343] hover:bg-[#023131] text-white font-semibold py-4 rounded-2xl shadow-lg mt-4 transition-all text-sm">Simpan ke Rapor Tahfidz</button>
+        </form>
+      </div>
+    </div>
+  `;
+};
+
+window.updateRbSantri = function(kelas) {
+  let sel = document.getElementById('rb-santri');
+  if(!sel) return;
+  let filtered = state.santri.filter(s => String(s.kelas || s.KELAS || '').trim().toLowerCase() === String(kelas).trim().toLowerCase());
+  sel.innerHTML = '<option value="">-- Pilih Santri --</option>' + filtered.map(s => `<option value="${s.nama_santri || s.nama || s.NAMA_SANTRI}">${s.nama_santri || s.nama || s.NAMA_SANTRI}</option>`).join('');
+};
+
+window.updateRbBaris = function(el) {
+  let opt = el.options[el.selectedIndex];
+  if(!opt.value) return;
+  document.getElementById('rb-no-surat').value = opt.getAttribute('data-no');
+  document.getElementById('rb-nama-surat').value = opt.getAttribute('data-nama');
+  let b = opt.getAttribute('data-baris');
+  document.getElementById('rb-jumlah-baris').value = b;
+  document.getElementById('rb-info-baris').textContent = b + " baris";
+};
+
+window.handleSimpanRaporBiru = async function(e) {
+  e.preventDefault();
+  const payload = {
+    kelas: document.getElementById('rb-kelas').value,
+    namaSantri: document.getElementById('rb-santri').value,
+    noSurat: document.getElementById('rb-no-surat').value,
+    namaSurat: document.getElementById('rb-nama-surat').value,
+    jumlahBaris: document.getElementById('rb-jumlah-baris').value,
+    salahHafalan: document.getElementById('rb-salah-hafalan').value,
+    salahTajwid: document.getElementById('rb-salah-tajwid').value,
+    salahMakhroj: document.getElementById('rb-salah-makhroj').value,
+    namaUstadz: state.user ? state.user.nama_lengkap : '-',
+    username: state.user ? state.user.username : '-' // <--- BARIS INI YANG DITAMBAHKAN
+  };
+
+  Swal.fire({ title: 'Menyimpan ke Rapor...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  const res = await window.apiCall('simpanRaporBiru', payload);
+  if (res.success) {
+    window.playSuccessSound();
+    Swal.fire('Berhasil', res.message, 'success');
+    document.getElementById('rb-salah-hafalan').value = 0;
+    document.getElementById('rb-salah-tajwid').value = 0;
+    document.getElementById('rb-salah-makhroj').value = 0;
+    window.loadDashboardData(); 
+  } else {
+    Swal.fire('Gagal', res.message, 'error');
+  }
+};
+
+// ==========================================
+// 5. ORTU VIEWS (PANEL WALI SANTRI)
+// ==========================================
+window.renderOrtuDashboard = function() {
+  const logoHeader = state.pengaturan?.logo || 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi-d-py0iyhZ1QlXf_zvJbzrLcwSsJwBEHa0BqPJJdvb94VfrCnCiybb3jehSXNl6e8LrvptMbXgJMh0yUkWZljHKTMWD3UY-6wXf-mSsN27LekzH808KhGRQHmXlJY9s3yCv-LRUVzkUfcJV2w3w6Bjnct4AdNrtWmMXKCzE-8DsnlfDVEJBhyckH5W1s/s320/LOGO_SD_DS_NEW-removebg-preview.png';
+  return `
+    <header class="bg-gradient-to-r from-[#023131] to-[#044343] text-white shadow-md flex-shrink-0 w-full z-50 px-5 h-16 flex items-center justify-between border-b border-[#D4AF37]/30">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border border-[#D4AF37] shadow-md p-0.5"><img src="${logoHeader}" class="w-full h-full object-contain rounded-full"></div>
+        <h1 class="font-bold text-sm tracking-wide text-amber-100">Panel Wali Murid</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="window.toggleDarkMode()" class="w-8 h-8 rounded-full bg-white/10 text-amber-200 hover:bg-white/20 flex items-center justify-center transition-colors shadow-sm" title="Ganti Tema">
+          <i class="fas ${state.isDarkMode ? 'fa-sun text-yellow-300' : 'fa-moon'} text-xs"></i>
+        </button>
+        <button onclick="window.handleLogout()" class="px-3 py-1.5 text-xs rounded-xl bg-red-500 text-white hover:bg-red-600 btn-active border border-red-600 font-bold transition-colors shadow-sm">Keluar</button>
+      </div>
+    </header>
+    <main class="flex-grow p-5 pb-36 overflow-y-auto h-full bg-[#F4EFE6]">
+        ${state.isLoading ? window.renderLoading() : (state.activeTabOrtu === 'amalan' ? window.renderOrtuMutabaah() : state.activeTabOrtu === 'nilai-surat' ? window.renderOrtuNilaiSurat() : window.renderOrtuBeranda())} 
+        ${!state.isLoading ? window.getWatermark() : ''}
+    </main>
+    <nav class="floating-nav" style="background: rgba(244, 239, 230, 0.85);">
+        <button onclick="window.switchTabOrtu('beranda')" class="flex flex-col items-center justify-center w-full h-full gap-0.5 btn-active ${state.activeTabOrtu === 'beranda' ? 'text-[#9A7B0C] font-bold' : 'text-[#9A7B0C]/80'}"><i class="fas fa-home text-sm"></i><span class="text-[8px] uppercase tracking-wider font-semibold">Laporan</span></button>
+        
+        <button onclick="window.switchTabOrtu('nilai-surat')" class="flex flex-col items-center justify-center w-full h-full gap-0.5 btn-active ${state.activeTabOrtu === 'nilai-surat' ? 'text-amber-700 font-bold' : 'text-amber-700/80'}"><i class="fas fa-award text-sm"></i><span class="text-[8px] uppercase tracking-wider font-semibold">Nilai Surat</span></button>
+
+        <button onclick="window.switchTabOrtu('amalan')" class="flex flex-col items-center justify-center w-full h-full gap-0.5 btn-active ${state.activeTabOrtu === 'amalan' ? 'text-purple-700 font-bold' : 'text-purple-700/80'}"><i class="fas fa-clipboard-check text-sm"></i><span class="text-[8px] uppercase tracking-wider font-semibold">Mutaba'ah</span></button>
+    </nav>
+  `;
+};
+
+window.renderOrtuBeranda = function() {
+  let info = state.santri_info || {};
+  let rawValTarget = info.nilai_target || info.NILAI_TARGET || info.Nilai_Target || info['Nilai Target'] || info['NILAI TARGET'] || info.target || info.TARGET || '0';
+  let valTargetStr = window.formatNilaiTargetClean(rawValTarget);
+  let numVal = parseFloat(valTargetStr.replace('%', '').replace(',', '.'));
+  
+  let badgeColor = 'bg-gray-100 text-gray-700 border-gray-300'; 
+  if (!isNaN(numVal) && numVal > 0) {
+      if (numVal >= 100) badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200'; 
+      else if (numVal >= 90 && numVal < 100) badgeColor = 'bg-amber-50 text-amber-700 border-amber-200'; 
+      else badgeColor = 'bg-red-50 text-red-700 border-red-200'; 
+  }
+
+  let halaqahAnak = info.halaqah || info.HALAQAH || '';
+  let ustadzPengampu = (state.ustadz || []).find(u => {
+      let namaU = String(u.nama_lengkap || '').trim().toLowerCase();
+      let halaqahLower = String(halaqahAnak).trim().toLowerCase();
+      if (!namaU || !halaqahLower) return false;
+      return halaqahLower.includes(namaU) || namaU.includes(halaqahLower);
+  });
+  
+  let noWaUstadz = ustadzPengampu ? (ustadzPengampu.no_wa || ustadzPengampu.NO_WA || ustadzPengampu.No_Wa || '') : '';
+  if (noWaUstadz.toString().startsWith('08')) noWaUstadz = '62' + noWaUstadz.toString().substring(1);
+  
+  let ustadzInfoHtml = '';
+  if (halaqahAnak && halaqahAnak !== '-') {
+      let waBtnHtml = '';
+      if (noWaUstadz) {
+          let waLink = `https://wa.me/${noWaUstadz}`;
+          waBtnHtml = `<a href="${waLink}" target="_blank" class="ml-2 w-9 h-9 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-md transition-all transform hover:scale-105" title="Hubungi Ustadz via WhatsApp"><i class="fab fa-whatsapp text-lg"></i></a>`;
+      }
+      ustadzInfoHtml = `<div class="mt-2 pt-2 border-t border-emerald-800/40 flex items-center justify-between"><p class="text-[11px]"><i class="fas fa-chalkboard-teacher mr-1 text-amber-300"></i> Pengampu: <b>${halaqahAnak}</b></p>${waBtnHtml}</div>`;
+  }
+
+  let p = state.pengaturan || {};
+  let cards = (state.setoran || []).map((s) => {
+    let kualitas = s.kualitas || s.KUALITAS || ''; 
+    let isGood = kualitas.includes('Lancar') || kualitas.includes('Muntaz') || kualitas.includes('Jayyid'); 
+    let color = isGood ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-red-700 bg-red-50 border-red-200'; 
+    
+    let rawSurah = String(s.surah || s.SURAH || '-');
+    let hariIniText = rawSurah;
+    let akanDatangText = '';
+    if (rawSurah.includes(' | Akan Datang: ')) {
+      let parts = rawSurah.split(' | Akan Datang: ');
+      hariIniText = parts[0];
+      akanDatangText = parts[1];
+    }
+
+    let ayatClean = window.formatAyatClean(s.ayat);
+    let detailHtml = `
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-xs bg-emerald-50/50 px-3 py-2 rounded-xl border border-emerald-100">
+          <span class="font-bold text-emerald-900"><i class="fas fa-check-circle text-emerald-600 mr-1.5"></i> Hari Ini:</span>
+          <span class="font-bold text-gray-800">${hariIniText} ${ayatClean && ayatClean !== '-' ? '('+ayatClean+')' : ''}</span>
+        </div>
+        ${akanDatangText ? `
+        <div class="flex items-center justify-between text-xs bg-amber-50/50 px-3 py-2 rounded-xl border border-amber-100">
+          <span class="font-bold text-amber-900"><i class="fa-solid fa-arrow-right text-amber-600 mr-1.5"></i> Tugas Selanjutnya:</span>
+          <span class="font-bold text-gray-800">${akanDatangText}</span>
+        </div>` : ''}
+      </div>
+    `;
+
+    if (!rawSurah.includes(' | Akan Datang: ') && (s.tilawah && s.tilawah !== '-')) {
+      detailHtml = `<p class="text-[13px] font-bold text-center text-gray-900">${s.tilawah}</p>`;
+    } else if (!rawSurah.includes(' | Akan Datang: ') && (s.hadits && s.hadits !== '-')) {
+      detailHtml = `<p class="text-[13px] font-bold text-center text-gray-900">${s.hadits}</p>`;
+    }
+
+   // PENANGANAN AUDIO MENGGUNAKAN EMBED PLAYER GOOGLE YANG RAPI & BERSIH
+    let audioLink = s.audio_talqin || s.AUDIO_TALQIN || s.Audio_Talqin || s['Audio_Talqin'] || s['audio_talqin'] || '-';
+    let audioHtml = '';
+    
+    if (audioLink && audioLink !== '-' && String(audioLink).startsWith('http')) {
+        let fileIdMatch = String(audioLink).match(/[-\w]{25,}/);
+        if (fileIdMatch) {
+            let fileId = fileIdMatch[0];
+            // Menggunakan iframe preview dengan tinggi minimalis agar terlihat seperti pemutar audio biasa
+            audioHtml = `
+              <div class="mt-3 p-3 bg-white rounded-2xl border border-blue-100 shadow-2xs">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[10px] font-bold text-blue-900 flex items-center gap-1.5"><i class="fas fa-headphones-alt text-blue-600"></i> Rekaman Talqin Ustadz</span>
+                </div>
+                <div class="w-full overflow-hidden rounded-xl bg-gray-50 border border-gray-100" style="height: 44px;">
+                    <iframe src="https://drive.google.com/file/d/${fileId}/preview" width="100%" height="80" style="border:none; margin-top: -18px; pointer-events: auto;" scrolling="no"></iframe>
+                </div>
+              </div>
+            `;
+        }
+    }
+
+    return `
+      <div class="bg-white p-4 rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-3">
+        <div class="flex justify-between items-start mb-2"><h4 class="font-bold text-gray-800 text-sm">Setoran Hafalan</h4><span class="px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${color}">${kualitas || 'Lancar'}</span></div>
+        <div class="bg-[#F4EFE6] p-3 rounded-2xl border border-gray-200/60">
+          ${detailHtml}
+          ${audioHtml}
+          ${s.catatan && s.catatan !== '-' ? `<p class="text-[11px] text-gray-600 italic text-center border-t border-gray-200 pt-1.5 mt-2">"${s.catatan}"</p>` : ''}
+        </div>
+        <div class="flex justify-between text-[10px] text-gray-500 mt-3 pt-2 border-t border-gray-100"><span><i class="far fa-calendar-alt text-[#044343]"></i> ${new Date(s.tanggal).toLocaleDateString('id-ID')}</span><span><i class="fas fa-user-circle text-[#044343]"></i> ${s.nama_ustadz || s.NAMA_USTADZ || '-'}</span></div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="bg-gradient-to-br from-[#064e3b] to-[#022c22] rounded-3xl p-6 text-white shadow-xl mb-5 relative overflow-hidden">
+      <div class="absolute right-[-20px] bottom-[-20px] opacity-10 pointer-events-none"><i class="fas fa-book-open text-[150px] text-white"></i></div>
+      <div class="relative z-10">
+        <p class="text-amber-200 text-xs font-bold uppercase tracking-wider mb-1">${p.nama_lembaga || 'SDIT DARUSSAKINAH BATAM'}</p>
+        <h2 class="text-xl font-extrabold text-white">${info.nama_santri || info.NAMA_SANTRI || state.user.nama_lengkap}</h2>
+        <div class="mt-4 pt-3 border-t border-emerald-800/60 text-[11px] space-y-1 text-emerald-100">
+          <p><i class="fas fa-user-tie mr-1 text-amber-300"></i> Kepala Sekolah: <b>${p.nama_pimpinan || '-'}</b></p>
+          <p><i class="fas fa-user-check mr-1 text-amber-300"></i> Koordinator: <b>${p.nama_koordinator || '-'}</b></p>
+          ${ustadzInfoHtml}
+        </div>
+        ${valTargetStr !== '-' ? `<div class="mt-4 bg-white/10 backdrop-blur rounded-2xl p-3 flex items-center justify-between border border-white/20"><div class="flex items-center gap-2"><i class="fas fa-bolt text-amber-300 text-base"></i><span class="text-xs font-bold">Capaian Target</span></div><span class="text-lg font-black px-3 py-1 rounded-lg border ${badgeColor}">${valTargetStr}</span></div>` : ''}
+      </div>
+    </div>
+    <div class="bg-gradient-to-br from-[#023131] to-[#044343] p-4 rounded-3xl border border-[#D4AF37]/30 shadow-xl mb-5">
+      <div class="flex items-center justify-between mb-3 border-b border-[#D4AF37]/20 pb-2"><span class="text-[#D4AF37] font-bold text-xs tracking-widest uppercase">Jadwal Salat (Batam)</span><i class="fas fa-mosque text-[#D4AF37]"></i></div>
+      <div class="grid grid-cols-5 gap-1 text-center">${['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map(waktu => `<div class="flex flex-col"><span class="text-[9px] text-gray-300 uppercase">${waktu === 'Fajr' ? 'Subuh' : waktu === 'Dhuhr' ? 'Dzuhur' : waktu === 'Asr' ? 'Ashar' : waktu === 'Maghrib' ? 'Maghrib' : 'Isya'}</span><span class="text-[11px] font-bold text-white mt-0.5">${(state.waktuSalat && state.waktuSalat[waktu]) || '--:--'}</span></div>`).join('')}</div>
+    </div>
+    ${state.pengumuman ? `<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-sm mb-5"><h4 class="text-[10px] font-bold text-amber-900 uppercase mb-1 tracking-wider flex items-center gap-1"><i class="fas fa-bullhorn text-amber-600"></i> Pengumuman Sekolah</h4><p class="text-xs text-amber-950 font-medium">${state.pengumuman}</p></div>` : ''}
+    ${p.link_wa ? `<a href="${p.link_wa}" target="_blank" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 text-white font-bold py-3.5 rounded-2xl shadow-md flex justify-center items-center gap-2 mb-5 transition-all"><i class="fab fa-whatsapp text-lg"></i> Grup WhatsApp Wali Murid</a>` : ''}
+    <div class="grid grid-cols-3 gap-2 mb-6">
+      <div class="bg-white rounded-2xl p-3 text-center border border-gray-100 shadow-2xs"><i class="fas fa-layer-group text-[#044343] mb-1 text-base"></i><p class="text-[8px] font-bold uppercase text-gray-500">Jml Hafalan</p><p class="text-xs font-bold text-gray-800 mt-0.5">${info.jumlah_hafalan || info.JUMLAH_HAFALAN || '-'}</p></div>
+      <div class="bg-white rounded-2xl p-3 text-center border border-gray-100 shadow-2xs"><i class="fas fa-sync-alt text-blue-500 mb-1 text-base"></i><p class="text-[8px] font-bold uppercase text-gray-500">Murojaah</p><p class="text-xs font-bold text-gray-800 mt-0.5 truncate">${info.murojaah || info.MUROJAAH || '-'}</p></div>
+      <div class="bg-white rounded-2xl p-3 text-center border border-gray-100 shadow-2xs"><i class="fas fa-book-open text-amber-500 mb-1 text-base"></i><p class="text-[8px] font-bold uppercase text-gray-500">Terakhir</p><p class="text-[10px] font-bold text-gray-800 mt-0.5 truncate">${info.juz_hafal || info.JUZ_HAFAL || '-'}</p></div>
+    </div>
+    <div class="bg-white rounded-3xl p-5 shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-6">
+      <div class="flex justify-between items-center mb-4"><h3 class="text-sm font-bold text-gray-800"><i class="fas fa-chart-line text-[#D4AF37] mr-2"></i> Grafik Aktivitas Setoran</h3><span class="text-[9px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded-lg font-bold">6 Bulan Terakhir</span></div>
+      <div class="relative h-48 w-full"><canvas id="ortuChart"></canvas></div>
+    </div>
+    <h3 class="text-sm font-bold text-gray-800 mb-3"><i class="fas fa-list-ul text-[#044343] mr-2"></i> Laporan Harian</h3>
+    <div>${cards || `<div class="text-center p-8 bg-white border border-dashed rounded-3xl text-gray-400 text-xs">Belum ada riwayat setoran.</div>`}</div>
+  `;
+};
+
+window.renderOrtuNilaiSurat = function() {
+  let info = state.santri_info || {};
+  let namaAnak = String(info.nama_santri || info.nama || info.NAMA_SANTRI || info.NAMA || state.user.nama_lengkap || '').trim().toLowerCase();
+  let listRapor = state.raporBiru || [];
+  
+  let filteredRapor = listRapor.filter(r => {
+    let namaDiRapor = String(r.nama_santri || r.NAMA_SANTRI || '').trim().toLowerCase();
+    return namaDiRapor === namaAnak || namaDiRapor.includes(namaAnak) || namaAnak.includes(namaDiRapor);
+  });
+
+  let cards = filteredRapor.map(r => `
+    <div class="bg-white p-4 rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-4">
+      <div class="flex justify-between items-start mb-2">
+        <div>
+          <h4 class="font-bold text-sm text-[#044343]">${r.nama_surat || 'Surat'}</h4>
+        </div>
+        <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          Nilai: ${r.rata_rata || 0}
+        </span>
+      </div>
+      <div class="bg-[#F4EFE6] p-3 rounded-2xl border border-gray-200/60 text-xs space-y-1.5 my-2">
+        <div class="grid grid-cols-3 gap-1 text-center">
+          <div class="bg-white p-1.5 rounded-xl border border-gray-200">
+            <p class="text-[9px] text-gray-400 uppercase">Hafalan</p>
+            <p class="font-bold text-rose-600">Salah: ${r.salah_hafalan || 0}</p>
+            <p class="text-[9px] font-bold text-[#044343]">${r.nilai_hafalan || 0}</p>
+          </div>
+          <div class="bg-white p-1.5 rounded-xl border border-gray-200">
+            <p class="text-[9px] text-gray-400 uppercase">Tajwid</p>
+            <p class="font-bold text-rose-600">Salah: ${r.salah_tajwid || 0}</p>
+            <p class="text-[9px] font-bold text-[#044343]">${r.nilai_tajwid || 0}</p>
+          </div>
+          <div class="bg-white p-1.5 rounded-xl border border-gray-200">
+            <p class="text-[9px] text-gray-400 uppercase">Makhroj</p>
+            <p class="font-bold text-rose-600">Salah: ${r.salah_makhroj || 0}</p>
+            <p class="text-[9px] font-bold text-[#044343]">${r.nilai_makhroj || 0}</p>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-between text-[10px] text-gray-400 pt-1">
+        <span><i class="far fa-calendar-alt text-[#044343]"></i> ${r.tanggal || '-'}</span>
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="mb-5">
+      <h3 class="text-sm font-bold text-gray-800 mb-3"><i class="fas fa-award text-amber-600 mr-1.5"></i> Riwayat Nilai Surat Anak</h3>
+      <div>${cards || `<div class="text-center p-8 bg-white border border-dashed rounded-3xl text-gray-400 text-xs">Belum ada riwayat nilai surat yang diinput oleh Ustadz/Ustadzah.</div>`}</div>
+    </div>
+  `;
+};
+
+window.renderOrtuMutabaah = function() {
+  let cards = (state.mutabaah || []).map(m => `
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-4 mb-4">
+      <span class="text-xs font-bold text-gray-600 block mb-3 border-b border-gray-100 pb-2">
+        <i class="far fa-calendar-check text-purple-600 mr-1"></i> ${new Date(m.tanggal).toLocaleDateString('id-ID')}
+      </span>
+      
+      <p class="text-[10px] font-bold text-purple-900 uppercase mb-1.5 tracking-wider">1. Salat Wajib</p>
+      <div class="grid grid-cols-5 gap-1 text-center mb-3 bg-purple-50/40 p-2 rounded-2xl border border-purple-100">
+        ${['subuh','dzuhur','ashar','maghrib','isya'].map(w => `
+          <div class="flex flex-col items-center">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center ${m[w]==='Ya'?'bg-emerald-100 text-emerald-700':'bg-red-50 text-red-400'}">
+              <i class="fas fa-${m[w]==='Ya'?'check':'times'} text-[10px]"></i>
+            </div>
+            <span class="text-[8px] mt-1 capitalize font-bold text-gray-600">${w}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <p class="text-[10px] font-bold text-blue-900 uppercase mb-1.5 tracking-wider">2. Kebiasaan Baik Murid SDIT Darussakinah</p>
+      <div class="grid grid-cols-2 gap-1.5 mb-3 text-[10px]">
+        ${[
+          {key: 'merapikan_tempat_tidur', label: 'Rapikan Tempat Tidur'}, {key: 'doa_bangun_tidur', label: 'Doa Bangun Tidur'}, {key: 'mandi_pagi', label: 'Mandi Pagi'}, {key: 'sikat_gigi', label: 'Menyikat Gigi'}, {key: 'berpamitan', label: 'Berpamitan ke Ortu'}, {key: 'dzikir_pagi', label: 'Dzikir Pagi'}, {key: 'dhuha', label: 'Salat Dhuha'}, {key: 'akhlak_adab', label: 'Akhlak & Adab'}, {key: 'menghormati_tua', label: 'Adab ke Lebih Tua'}, {key: 'menyayangi_muda', label: 'Sayang ke Lebih Muda'}, {key: 'jaga_lisan', label: 'Menjaga Lisan'}, {key: 'tidur_tepat_waktu', label: 'Tidur Tepat Waktu'}
+        ].map(item => `
+          <div class="flex items-center gap-1.5 bg-blue-50/40 px-2.5 py-1.5 rounded-xl border border-blue-100">
+            <i class="fas fa-${m[item.key]==='Ya' ? 'check-circle text-emerald-500' : 'times-circle text-red-300'} text-xs"></i>
+            <span class="text-gray-700 font-medium truncate">${item.label}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <p class="text-[10px] font-bold text-emerald-900 uppercase mb-1.5 tracking-wider">3. Murojaah Al-Qur'an</p>
+      <div class="grid grid-cols-3 gap-1.5 mb-3 text-[10px]">
+        ${[
+          {key: 'murojaah_ashar', label: 'Ba\'da Ashar'}, {key: 'murojaah_maghrib', label: 'Ba\'da Maghrib'}, {key: 'murojaah_isya', label: 'Ba\'da Isya'}
+        ].map(item => `
+          <div class="flex flex-col items-center bg-emerald-50/50 p-2 rounded-xl border border-emerald-100 text-center">
+            <div class="w-5 h-5 rounded-full flex items-center justify-center ${m[item.key]==='Ya'?'text-emerald-600':'text-red-300'} mb-0.5">
+              <i class="fas fa-${m[item.key]==='Ya'?'check-circle':'times-circle'} text-xs"></i>
+            </div>
+            <span class="text-gray-700 font-medium text-[9px]">${item.label}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="text-[11px] text-gray-600 italic bg-gray-50 p-3 rounded-2xl border border-gray-100">
+        <span class="block text-[9px] font-bold text-gray-400 uppercase mb-0.5">Catatan Orang Tua</span>
+        "${m.catatan || m.CATATAN || '-'}"
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="mb-5">
+      <h3 class="text-sm font-bold text-purple-950 mb-3"><i class="fas fa-clipboard-list text-purple-600 mr-1.5"></i> Form Mutaba'ah Harian</h3>
+      <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 mb-8">
+        <form onsubmit="window.submitMutabaah(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Tanggal</label>
+            <input type="date" id="mut-tgl" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-xs outline-none focus:border-purple-500 font-medium" value="${new Date().toISOString().split('T')[0]}" required>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-purple-900 mb-2 mt-2">1. Salat Wajib</label>
+            <div class="grid grid-cols-5 gap-1 text-sm">
+              ${['subuh','dzuhur','ashar','maghrib','isya'].map(w=>`
+                <label class="flex flex-col items-center justify-center bg-purple-50/30 p-2 rounded-xl border border-purple-100 font-medium text-gray-700 text-[10px] cursor-pointer">
+                  <input type="checkbox" id="mut-${w}" class="w-3.5 h-3.5 text-purple-700 rounded mb-1">
+                  <span class="capitalize">${w}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-blue-900 mb-2 mt-3">2. Kebiasaan Baik Murid SDIT Darussakinah</label>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              ${[
+                {id: 'merapikan_tempat_tidur', label: 'Rapikan Tempat Tidur'}, {id: 'doa_bangun_tidur', label: 'Doa Bangun Tidur'}, {id: 'mandi_pagi', label: 'Mandi Pagi'}, {id: 'sikat_gigi', label: 'Menyikat Gigi'}, {id: 'berpamitan', label: 'Berpamitan ke Ortu'}, {id: 'dzikir_pagi', label: 'Dzikir Pagi'}, {id: 'dhuha', label: 'Salat Dhuha'}, {id: 'akhlak_adab', label: 'Akhlak & Adab'}, {id: 'menghormati_tua', label: 'Adab ke Lebih Tua'}, {id: 'menyayangi_muda', label: 'Sayang ke Lebih Muda'}, {id: 'jaga_lisan', label: 'Menjaga Lisan (No Kotor)'}, {id: 'tidur_tepat_waktu', label: 'Tidur Tepat Waktu'}
+              ].map(item => `
+                <label class="flex items-center space-x-2 bg-blue-50/30 p-2.5 rounded-xl border border-blue-100 font-medium text-gray-700 cursor-pointer">
+                  <input type="checkbox" id="mut-${item.id}" class="w-4 h-4 text-blue-600 rounded flex-shrink-0">
+                  <span class="leading-tight">${item.label}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-emerald-900 mb-2 mt-3">3. Murojaah Al-Qur'an</label>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              ${[
+                {id: 'murojaah_ashar', label: 'Ba\'da Ashar'}, {id: 'murojaah_maghrib', label: 'Ba\'da Maghrib'}, {id: 'murojaah_isya', label: 'Ba\'da Isya'}
+              ].map(item => `
+                <label class="flex items-center space-x-1.5 bg-emerald-50/40 p-2.5 rounded-xl border border-emerald-100 font-medium text-gray-700 cursor-pointer justify-center text-center">
+                  <input type="checkbox" id="mut-${item.id}" class="w-4 h-4 text-emerald-600 rounded flex-shrink-0">
+                  <span class="leading-tight text-[10px]">${item.label}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1 mt-3 ml-1">Catatan Orang Tua</label>
+            <textarea id="mut-catatan" rows="2" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-xs outline-none focus:border-purple-500 font-medium" placeholder="Pesan atau catatan untuk guru..."></textarea>
+          </div>
+
+          <button type="submit" class="w-full bg-purple-700 hover:bg-purple-800 text-white font-semibold py-4 rounded-2xl shadow-md transition-all">Kirim Laporan Amalan</button>
+        </form>
+      </div>
+
+      <h3 class="text-sm font-bold text-gray-800 mb-3"><i class="fas fa-history text-purple-600 mr-2"></i> Riwayat Amalan</h3>
+      <div>${cards||'<div class="text-center p-8 bg-white border border-dashed rounded-3xl text-gray-400 text-xs">Belum ada catatan amalan.</div>'}</div>
+    </div>
+  `;
+};
+
+window.handleFilterMutabaahKelas = function(val) {
+    state.filterMutabaahKelas = val;
+    state.filterMutabaahSantri = '';
+    window.renderApp();
+};
+
+window.handleFilterMutabaahSantri = function(val) {
+    state.filterMutabaahSantri = val;
+    window.renderApp();
+};
+
+window.renderMutabaahUstadz = function() {
+  const namaLogin = String(state.user.nama_lengkap || '').trim().toLowerCase();
+  const usernameLogin = String(state.user.username || '').trim().toLowerCase();
+  const isSuperAdmin = usernameLogin === 'admin' || namaLogin === 'fadhl al harits' || namaLogin === 'admin';
+
+  let baseSantri = state.santri.filter(s => {
+      if (isSuperAdmin) return true; 
+      let halaqahSantri = String(s.halaqah || s.HALAQAH || '').trim().toLowerCase();
+      return halaqahSantri.includes(namaLogin) || namaLogin.includes(halaqahSantri);
+  });
+
+  let listKelas = [...new Set(baseSantri.map(s => String(s.kelas || s.KELAS || '').trim()).filter(Boolean))].sort();
+
+  let filteredSantriForDropdown = baseSantri;
+  if (state.filterMutabaahKelas) {
+      filteredSantriForDropdown = baseSantri.filter(s => String(s.kelas || s.KELAS || '').trim() === state.filterMutabaahKelas);
+  }
+  let listMurid = [...new Set(filteredSantriForDropdown.map(s => String(s.nama_santri || s.nama || s.NAMA_SANTRI || '').trim()).filter(Boolean))].sort();
+
+  let filteredMutabaah = state.mutabaah.filter(m => {
+    let santriObj = state.santri.find(s => String(s.id_santri || s.ID_SANTRI) === String(m.id_santri || m.ID_SANTRI));
+    if (!santriObj) return false;
+    
+    if (!isSuperAdmin) {
+        let halaqahSantri = String(santriObj.halaqah || santriObj.HALAQAH || '').trim().toLowerCase();
+        if (!(halaqahSantri.includes(namaLogin) || namaLogin.includes(halaqahSantri))) return false;
+    }
+
+    if (state.filterMutabaahKelas && String(santriObj.kelas || santriObj.KELAS || '').trim() !== state.filterMutabaahKelas) return false;
+    
+    if (state.filterMutabaahSantri && String(santriObj.nama_santri || santriObj.nama || santriObj.NAMA_SANTRI || '').trim() !== state.filterMutabaahSantri) return false;
+
+    return true;
+  });
+
+  let cards = filteredMutabaah.map(m => {
+    let santriObj = state.santri.find(s => String(s.id_santri || s.ID_SANTRI) === String(m.id_santri || m.ID_SANTRI));
+    let namaSantri = santriObj ? (santriObj.nama_santri || santriObj.nama || santriObj.NAMA_SANTRI) : 'Tanpa Nama';
+    let kelasSantri = santriObj ? (santriObj.kelas || santriObj.KELAS || '-') : '-';
+    let halaqahSantri = santriObj ? (santriObj.halaqah || santriObj.HALAQAH || '-') : '-';
+
+    return `
+      <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 mb-4 riwayat-mutabaah-card">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <h4 class="font-bold text-sm text-gray-800">${namaSantri}</h4>
+            <p class="text-[10px] text-gray-500 font-medium mt-0.5">Kelas: ${kelasSantri} | Pembimbing: ${halaqahSantri}</p>
+          </div>
+          <span class="text-[10px] text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg font-semibold">${new Date(m.tanggal).toLocaleDateString('id-ID')}</span>
+        </div>
+        
+        <p class="text-[10px] font-bold text-purple-900 uppercase mb-1 tracking-wider">1. Salat Wajib</p>
+        <div class="flex justify-between bg-purple-50/40 p-2 rounded-2xl border border-purple-100 mb-3 text-center">
+          ${['subuh','dzuhur','ashar','maghrib','isya'].map(w => `
+            <div class="flex flex-col items-center flex-1 border-r border-purple-100 last:border-0">
+              <div class="w-5 h-5 rounded-full flex items-center justify-center ${m[w]==='Ya'?'text-emerald-500':'text-red-300'}">
+                <i class="fas fa-${m[w]==='Ya'?'check-circle':'times-circle'} text-[14px]"></i>
+              </div>
+              <span class="text-[8px] mt-1 text-gray-500 uppercase">${w}</span>
+            </div>
+          `).join('')}
+        </div>
+
+        <p class="text-[10px] font-bold text-blue-900 uppercase mb-1 tracking-wider">2. Kebiasaan Baik Murid</p>
+        <div class="grid grid-cols-2 gap-1.5 mb-3 text-[10px]">
+          ${[
+            {key: 'merapikan_tempat_tidur', label: 'Rapikan Tempat Tidur'}, {key: 'doa_bangun_tidur', label: 'Doa Bangun Tidur'}, {key: 'mandi_pagi', label: 'Mandi Pagi'}, {key: 'sikat_gigi', label: 'Menyikat Gigi'}, {key: 'berpamitan', label: 'Berpamitan ke Ortu'}, {key: 'dzikir_pagi', label: 'Dzikir Pagi'}, {key: 'dhuha', label: 'Salat Dhuha'}, {key: 'akhlak_adab', label: 'Akhlak & Adab'}, {key: 'menghormati_tua', label: 'Adab ke Lebih Tua'}, {key: 'menyayangi_muda', label: 'Sayang ke Lebih Muda'}, {key: 'jaga_lisan', label: 'Menjaga Lisan'}, {key: 'tidur_tepat_waktu', label: 'Tidur Tepat Waktu'}
+          ].map(item => `
+            <div class="flex items-center gap-1.5 bg-blue-50/40 px-2.5 py-1.5 rounded-xl border border-blue-100">
+              <i class="fas fa-${m[item.key]==='Ya' ? 'check-circle text-emerald-500' : 'times-circle text-red-300'} text-xs"></i>
+              <span class="text-gray-700 font-medium truncate">${item.label}</span>
+            </div>
+          `).join('')}
+        </div>
+
+        <p class="text-[10px] font-bold text-emerald-900 uppercase mb-1 tracking-wider">3. Murojaah Al-Qur'an</p>
+        <div class="grid grid-cols-3 gap-1.5 mb-3 text-[10px]">
+          ${[
+            {key: 'murojaah_ashar', label: 'Ba\'da Ashar'}, {key: 'murojaah_maghrib', label: 'Ba\'da Maghrib'}, {key: 'murojaah_isya', label: 'Ba\'da Isya'}
+          ].map(item => `
+            <div class="flex flex-col items-center bg-emerald-50/50 p-2 rounded-xl border border-emerald-100 text-center">
+              <div class="w-5 h-5 rounded-full flex items-center justify-center ${m[item.key]==='Ya'?'text-emerald-600':'text-red-300'} mb-0.5">
+                <i class="fas fa-${m[item.key]==='Ya'?'check-circle':'times-circle'} text-xs"></i>
+              </div>
+              <span class="text-gray-700 font-medium text-[9px]">${item.label}</span>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="text-[11px] text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100 border-l-2 border-l-[#044343]">
+          <span class="block text-[9px] font-bold text-gray-400 mb-0.5 uppercase tracking-wider">Catatan Ortu</span>
+          ${m.catatan || '-'}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="px-5 pt-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-[#044343] leading-tight">Mutaba'ah Murid Asuhan</h2>
+        <button onclick="window.switchTab('beranda')" class="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:text-[#044343] shadow-sm transition-colors"><i class="fas fa-arrow-left text-xs"></i></button>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="relative">
+          <select onchange="window.handleFilterMutabaahKelas(this.value)" class="w-full bg-white border border-gray-100 rounded-2xl pl-4 pr-8 py-3 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700 font-semibold appearance-none">
+            <option value="">Semua Kelas</option>
+            ${listKelas.map(k => `<option value="${k}" ${state.filterMutabaahKelas === k ? 'selected' : ''}>${k}</option>`).join('')}
+          </select>
+          <i class="fas fa-chevron-down absolute right-4 top-3.5 text-gray-400 text-[10px] pointer-events-none"></i>
+        </div>
+        <div class="relative">
+          <select onchange="window.handleFilterMutabaahSantri(this.value)" class="w-full bg-white border border-gray-100 rounded-2xl pl-4 pr-8 py-3 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700 font-semibold appearance-none">
+            <option value="">Semua Murid</option>
+            ${listMurid.map(m => `<option value="${m}" ${state.filterMutabaahSantri === m ? 'selected' : ''}>${m}</option>`).join('')}
+          </select>
+          <i class="fas fa-chevron-down absolute right-4 top-3.5 text-gray-400 text-[10px] pointer-events-none"></i>
+        </div>
+      </div>
+
+      <div class="relative mb-5">
+        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i>
+        <input type="text" onkeyup="window.searchData('.riwayat-mutabaah-card', this.value)" placeholder="Cari Mutaba'ah murid..." class="w-full bg-white border border-gray-100 rounded-2xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700">
+      </div>
+      
+      ${cards || '<div class="text-center p-8 bg-white rounded-3xl border border-gray-100 text-gray-400 text-xs">Belum ada data mutabaah dari murid asuhan Anda (atau dari filter yang dipilih).</div>'}
+    </div>
+  `;
+};
+
+window.submitMutabaah = async function(e) { 
+  e.preventDefault(); 
+  const targetIdSantri = state.user.id_santri || state.user.ID_Santri || state.user.ID_SANTRI || '';
+  
+  const payload = { 
+    tanggal: document.getElementById('mut-tgl').value, 
+    id_santri: targetIdSantri, 
+    subuh: document.getElementById('mut-subuh').checked ? 'Ya' : 'Tidak', 
+    dzuhur: document.getElementById('mut-dzuhur').checked ? 'Ya' : 'Tidak', 
+    ashar: document.getElementById('mut-ashar').checked ? 'Ya' : 'Tidak', 
+    maghrib: document.getElementById('mut-maghrib').checked ? 'Ya' : 'Tidak', 
+    isya: document.getElementById('mut-isya').checked ? 'Ya' : 'Tidak', 
+    
+    merapikan_tempat_tidur: document.getElementById('mut-merapikan_tempat_tidur').checked ? 'Ya' : 'Tidak',
+    doa_bangun_tidur: document.getElementById('mut-doa_bangun_tidur').checked ? 'Ya' : 'Tidak',
+    mandi_pagi: document.getElementById('mut-mandi_pagi').checked ? 'Ya' : 'Tidak',
+    sikat_gigi: document.getElementById('mut-sikat_gigi').checked ? 'Ya' : 'Tidak',
+    berpamitan: document.getElementById('mut-berpamitan').checked ? 'Ya' : 'Tidak',
+    dzikir_pagi: document.getElementById('mut-dzikir_pagi').checked ? 'Ya' : 'Tidak',
+    dhuha: document.getElementById('mut-dhuha').checked ? 'Ya' : 'Tidak',
+    akhlak_adab: document.getElementById('mut-akhlak_adab').checked ? 'Ya' : 'Tidak',
+    menghormati_tua: document.getElementById('mut-menghormati_tua').checked ? 'Ya' : 'Tidak',
+    menyayangi_muda: document.getElementById('mut-menyayangi_muda').checked ? 'Ya' : 'Tidak',
+    jaga_lisan: document.getElementById('mut-jaga_lisan').checked ? 'Ya' : 'Tidak',
+    tidur_tepat_waktu: document.getElementById('mut-tidur_tepat_waktu').checked ? 'Ya' : 'Tidak',
+    
+    murojaah_ashar: document.getElementById('mut-murojaah_ashar').checked ? 'Ya' : 'Tidak',
+    murojaah_maghrib: document.getElementById('mut-murojaah_maghrib').checked ? 'Ya' : 'Tidak',
+    murojaah_isya: document.getElementById('mut-murojaah_isya').checked ? 'Ya' : 'Tidak',
+    
+    catatan: document.getElementById('mut-catatan').value 
+  }; 
+
+  Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); 
+  const res = await window.apiCall('addMutabaah', payload); 
+  if(res.success) { 
+    window.playSuccessSound();
+    Swal.fire('Berhasil', res.message, 'success'); 
+    window.loadDashboardData(); 
+  } else { 
+    Swal.fire('Gagal', res.message, 'error'); 
+  } 
+};
+
+// ==========================================
+// KELOLA PROGRESS SANTRI
+// ==========================================
+window.renderDataSantri = function() {
+  const namaLogin = String(state.user.nama_lengkap || '').trim().toLowerCase();
+  const usernameLogin = String(state.user.username || '').trim().toLowerCase();
+  const isSuperAdmin = usernameLogin === 'admin' || namaLogin === 'fadhl al harits' || namaLogin === 'admin';
+
+  let baseSantri = state.santri;
+  if (!isSuperAdmin) {
+      baseSantri = state.santri.filter(s => {
+          let halaqahSantri = String(s.halaqah || s.HALAQAH || '').trim().toLowerCase();
+          return halaqahSantri.includes(namaLogin) || namaLogin.includes(halaqahSantri);
+      });
+  }
+
+  let listKelas = [...new Set((baseSantri || []).map(s => s.kelas || s.KELAS).filter(Boolean))].sort();
+
+  let filteredSantri = baseSantri;
+  if (stateProgKelas) { filteredSantri = filteredSantri.filter(s => String(s.kelas || '').trim().toLowerCase() === String(stateProgKelas).trim().toLowerCase()); }
+
+  let listCards = filteredSantri.map(s => {
+    let rawValTarget = s.nilai_target || s.NILAI_TARGET || s.Nilai_Target || s['Nilai Target'] || s['NILAI TARGET'] || s.target || s.TARGET || '-';
+    let valTarget = window.formatNilaiTargetClean(rawValTarget);
+    let badgeColor = 'bg-gray-100 text-gray-700 border-gray-300'; 
+    let numVal = parseFloat(String(valTarget).replace('%', '').replace(',', '.'));
+    
+    if (!isNaN(numVal) && numVal > 0) {
+      if (numVal >= 100) badgeColor = 'bg-emerald-50 text-emerald-600 border-emerald-100'; 
+      else if (numVal >= 90 && numVal < 100) badgeColor = 'bg-amber-50 text-amber-600 border-amber-100'; 
+      else badgeColor = 'bg-red-50 text-red-600 border-red-100'; 
+    }
+    
+    return `
+    <div class="bg-white p-4 rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-4 flex items-center justify-between">
+      <div>
+        <h4 class="font-bold text-sm text-[#044343]">${s.nama_santri || s.nama || s.NAMA_SANTRI || 'Tanpa Nama'}</h4>
+        <p class="text-[10px] text-gray-500 font-medium mt-0.5">Kelas: <span class="text-gray-700">${s.kelas || '-'}</span> | Halaqah: <span class="text-gray-700">${s.halaqah || '-'}</span></p>
+        <div class="flex gap-2 mt-3">
+          <span class="text-[9px] bg-[#F4EFE6] px-2.5 py-1 rounded-lg border border-gray-200 text-gray-700"><i class="fas fa-layer-group text-blue-500 mr-1"></i> ${s.jumlah_hafalan || '-'}</span>
+          <span class="text-[9px] bg-[#F4EFE6] px-2.5 py-1 rounded-lg border border-gray-200 text-gray-700"><i class="fas fa-bullseye text-[#D4AF37] mr-1"></i> Target: <b class="${badgeColor.split(' ')[1]}">${valTarget}</b></span>
+        </div>
+      </div>
+      <button onclick="window.openProgressModal('${s.id_santri || s.ID_SANTRI}')" class="w-10 h-10 rounded-full bg-[#044343]/5 text-[#044343] hover:bg-[#044343] hover:text-white transition-colors flex items-center justify-center shadow-sm border border-[#044343]/10">
+        <i class="fas fa-pen text-xs"></i>
+      </button>
+    </div>
+  `}).join('');
+
+  return `
+    <div class="px-5 pt-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-[#044343] leading-tight">Data Target Murid</h2>
+        <button onclick="window.switchTab('beranda')" class="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:text-[#044343] shadow-sm transition-colors"><i class="fas fa-arrow-left text-xs"></i></button>
+      </div>
+      <div class="bg-white p-4 rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-6 space-y-3">
+        <div class="relative">
+          <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i>
+          <input type="text" onkeyup="window.searchData('.bg-white.p-4.rounded-3xl', this.value)" placeholder="Cari nama murid..." class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#044343] text-gray-700">
+        </div>
+        <div class="grid grid-cols-1 gap-3">
+          <select id="prog-filter-kelas" onchange="window.handleProgFilterKelas(this.value)" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3 text-xs text-gray-700 outline-none focus:border-[#044343] appearance-none"><option value="">Semua Kelas</option>${listKelas.map(k => `<option value="${k}" ${stateProgKelas === k ? 'selected' : ''}>${k}</option>`).join('')}</select>
+        </div>
+      </div>
+      ${listCards || '<div class="text-center p-8 bg-white rounded-3xl border border-gray-100 text-gray-400 text-xs">Belum ada murid di halaqah/kelas Anda.</div>'}
+      
+      <div id="modal-progress" class="app-modal">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 h-[85vh] overflow-y-auto shadow-2xl">
+          <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-50"><h3 class="font-bold text-[#044343]">Update Progress</h3><button type="button" onclick="window.closeModal('modal-progress')" class="w-8 h-8 bg-gray-50 hover:bg-red-50 hover:text-red-500 rounded-full flex items-center justify-center transition-colors text-gray-400"><i class="fas fa-times"></i></button></div>
+          <form onsubmit="window.handleUpdateProgress(event)" class="space-y-4">
+            <input type="hidden" id="prog-id">
+            <div class="font-semibold text-[#044343] mb-4 bg-[#F4EFE6] p-3.5 rounded-2xl border border-gray-200/60 flex items-center gap-2 text-sm" id="prog-nama"></div>
+            
+            <div class="grid grid-cols-2 gap-3 bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
+              <div><label class="block text-[9px] font-semibold text-gray-500 mb-1 uppercase tracking-wider">Kelas</label><input type="text" id="prog-kelas-otomatis" readonly class="w-full bg-transparent text-xs text-gray-800 font-bold outline-none"></div>
+              <div><label class="block text-[9px] font-semibold text-gray-500 mb-1 uppercase tracking-wider">Target Smt</label><input type="text" id="prog-info-target" readonly class="w-full bg-transparent text-xs text-[#044343] font-bold outline-none" placeholder="Memuat..."></div>
+            </div>
+
+            <div><label class="block text-xs font-semibold text-gray-700 mb-1.5 ml-1">Jml Hafalan (Juz)</label><input type="text" id="prog-hafalan" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-sm focus:border-[#044343] outline-none text-gray-700" placeholder="Contoh: 1 juz"></div>
+            <div><label class="block text-xs font-semibold text-gray-700 mb-1.5 ml-1">Murojaah Terakhir</label><input type="text" id="prog-murojaah" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-sm focus:border-[#044343] outline-none text-gray-700" placeholder="Contoh: An-Naba"></div>
+            
+            <div class="pt-2"><label class="block text-xs font-semibold text-gray-700 mb-1.5 ml-1">Hafalan Terakhir (Pilih Surah)</label><select id="prog-surah-pilihan" onchange="window.hitungNilaiBom()" class="w-full border border-gray-200 bg-[#F4EFE6] rounded-2xl p-3.5 text-sm focus:border-[#044343] font-medium text-gray-800 outline-none appearance-none" required><option value="">-- Pilih Surah --</option>${[...DAFTAR_SURAH].reverse().map(s => `<option value="${s}">${s}</option>`).join('')}</select></div>
+
+            <div><label class="block text-xs font-semibold text-gray-700 mb-1.5 ml-1 text-center">Capaian Target (%)</label><input type="text" id="prog-nilai-target" readonly class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-2xl font-bold text-[#044343] text-center shadow-inner" placeholder="0%"></div>
+
+            <button type="submit" class="w-full bg-[#044343] hover:bg-[#023131] text-white py-4 rounded-2xl font-semibold mt-4 shadow-lg transition-all">Simpan Perubahan</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+window.renderDataLoginMurid = function() {
+  const namaLogin = String(state.user.nama_lengkap || '').trim().toLowerCase();
+  const isSuperAdmin = state.user.username.toLowerCase() === 'admin' || namaLogin === 'fadhl al harits' || namaLogin === 'admin';
+
+  let myStudents = state.santri;
+  if (!isSuperAdmin) {
+      myStudents = state.santri.filter(s => {
+          let halaqahSantri = String(s.halaqah || s.HALAQAH || '').trim().toLowerCase();
+          return halaqahSantri.includes(namaLogin) || namaLogin.includes(halaqahSantri);
+      });
+  }
+
+  let listKelas = [...new Set(myStudents.map(s => String(s.kelas || s.KELAS || 'Tanpa Kelas').trim()))].sort();
+  let contentHtml = '';
+
+  if (listKelas.length === 0) {
+      contentHtml = '<div class="text-center p-8 bg-white border border-dashed rounded-3xl text-gray-400 text-xs">Belum ada data murid di asuhan Anda.</div>';
+  } else {
+      contentHtml = listKelas.map(kelas => {
+          let studentsInClass = myStudents.filter(s => String(s.kelas || s.KELAS || 'Tanpa Kelas').trim() === kelas);
+          
+          let studentCards = studentsInClass.map(s => {
+              let nama = s.nama_santri || s.nama || s.NAMA_SANTRI || s.Nama || 'Tanpa Nama';
+              let generatedUsername = nama.toLowerCase().replace(/\s+/g, '');
+              let generatedPassword = 'sditds';
+              
+              let uname = s.username || s.USERNAME || s.Username || s['Username'] || s['username'] || generatedUsername;
+              let pass = s.password || s.PASSWORD || s.Password || s['Password'] || s['password'] || generatedPassword;
+
+              return `
+                <div class="bg-[#F4EFE6] p-3 rounded-2xl border border-gray-200 mb-3 murid-login-card shadow-sm" data-nama="${nama.toLowerCase()}">
+                    <div class="flex items-center mb-2">
+                        <div class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex justify-center items-center mr-2 shadow-sm shrink-0 border border-indigo-200"><i class="fas fa-user-graduate text-[10px]"></i></div> 
+                        <span class="font-bold text-xs text-gray-800 truncate leading-tight">${nama}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="overflow-hidden">
+                                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Username</p>
+                                <p class="text-[10px] font-bold text-gray-800 truncate">${uname}</p>
+                            </div>
+                            <button onclick="window.copyCredential('${uname}')" class="w-7 h-7 shrink-0 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-500 hover:text-white flex items-center justify-center transition-all" title="Salin Username">
+                                <i class="far fa-copy text-[10px]"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="overflow-hidden">
+                                <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Password</p>
+                                <p class="text-[10px] font-bold text-gray-800 truncate">${pass}</p>
+                            </div>
+                            <button onclick="window.copyCredential('${pass}')" class="w-7 h-7 shrink-0 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-500 hover:text-white flex items-center justify-center transition-all" title="Salin Password">
+                                <i class="far fa-copy text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+              `;
+          }).join('');
+
+          return `
+            <div class="bg-white p-4 rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-5 class-group-card">
+                <h3 class="font-extrabold text-sm text-indigo-900 mb-3 flex items-center gap-2 border-b border-gray-50 pb-3">
+                    <div class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center"><i class="fas fa-chalkboard text-xs"></i></div>
+                    Kelas ${kelas}
+                    <span class="ml-auto text-[9px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg border border-indigo-100 font-bold">${studentsInClass.length} Murid</span>
+                </h3>
+                <div class="student-list">
+                    ${studentCards}
+                </div>
+            </div>
+          `;
+      }).join('');
+  }
+
+  return `
+    <div class="px-5 pt-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-[#044343] leading-tight">Data Akun Murid</h2>
+        <button onclick="window.switchTab('beranda')" class="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:text-[#044343] shadow-sm transition-colors"><i class="fas fa-arrow-left text-xs"></i></button>
+      </div>
+      
+      <div class="relative mb-5">
+        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i>
+        <input type="text" onkeyup="window.searchAkunMurid(this.value)" placeholder="Cari nama murid..." class="w-full bg-white border border-gray-100 rounded-2xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700">
+      </div>
+      
+      <div class="space-y-2" id="akun-murid-container">
+        ${contentHtml}
+      </div>
+    </div>
+  `;
+};
+
+window.searchAkunMurid = function(keyword) {
+    const lowerKeyword = keyword.toLowerCase();
+    const classCards = document.querySelectorAll('.class-group-card');
+    
+    classCards.forEach(classCard => {
+        let hasVisibleStudent = false;
+        const studentCards = classCard.querySelectorAll('.murid-login-card');
+        
+        studentCards.forEach(studentCard => {
+            const nama = studentCard.getAttribute('data-nama');
+            if (nama.includes(lowerKeyword)) {
+                studentCard.style.display = '';
+                hasVisibleStudent = true;
+            } else {
+                studentCard.style.display = 'none';
+            }
+        });
+        
+        if (hasVisibleStudent) {
+            classCard.style.display = '';
+        } else {
+            classCard.style.display = 'none';
+        }
+    });
+};
+
+window.handleProgFilterKelas = function(val) { stateProgKelas = val; window.renderApp(); };
+
+window.openProgressModal = function(id) {
+  const s = state.santri.find(x => String(x.id_santri || x.ID_SANTRI) === String(id));
+  if(!s) return;
+  
+  document.getElementById('prog-id').value = s.id_santri || s.ID_SANTRI;
+  document.getElementById('prog-nama').innerHTML = "<i class='fas fa-user-circle text-gray-400 text-lg'></i> " + (s.nama_santri || s.nama || s.NAMA_SANTRI || 'Tanpa Nama');
+  document.getElementById('prog-hafalan').value = (s.jumlah_hafalan || s.JUMLAH_HAFALAN || '-') === '-' ? '' : (s.jumlah_hafalan || s.JUMLAH_HAFALAN || '');
+  document.getElementById('prog-murojaah').value = (s.murojaah || s.MUROJAAH || '-') === '-' ? '' : (s.murojaah || s.MUROJAAH || '');
+  document.getElementById('prog-surah-pilihan').value = (s.juz_hafal || s.JUZ_HAFAL || '-') === '-' ? '' : (s.juz_hafal || s.JUZ_HAFAL || '');
+  
+  let rawValTarget = s.nilai_target || s.NILAI_TARGET || s.Nilai_Target || s['Nilai Target'] || s['NILAI TARGET'] || s.target || '-';
+  document.getElementById('prog-nilai-target').value = rawValTarget === '-' ? '' : window.formatNilaiTargetClean(rawValTarget);
+  
+  const kelasSantri = String(s.kelas || s.KELAS || '-');
+  document.getElementById('prog-kelas-otomatis').value = kelasSantri; 
+  const kelasSantriClean = kelasSantri.trim().toLowerCase().replace(/\s+/g, ' ');
+  
+  const targetData = (state.target || []).find(t => { let tKelas = String(t.kelas || t.KELAS || '').trim().toLowerCase().replace(/\s+/g, ' '); return tKelas === kelasSantriClean || tKelas.includes(kelasSantriClean) || kelasSantriClean.includes(tKelas); });
+  if (targetData) { let sAwal = targetData.surat_awal || targetData.SURAT_AWAL || targetData.surah_awal || '-'; let sAkhir = targetData.surat_akhir || targetData.SURAT_AKHIR || targetData.surah_akhir || '-'; document.getElementById('prog-info-target').value = `${sAwal} - ${sAkhir}`; } else { document.getElementById('prog-info-target').value = "Belum diset"; }
+  if(document.getElementById('prog-surah-pilihan').value) window.hitungNilaiBom();
+  window.openModal('modal-progress');
+};
+
+window.hitungNilaiBom = function() {
+  const kelasSantri = String(document.getElementById('prog-kelas-otomatis').value).trim().toLowerCase().replace(/\s+/g, ' ');
+  const surahPilihan = document.getElementById('prog-surah-pilihan').value;
+  const targetData = (state.target || []).find(t => { let tKelas = String(t.kelas || t.KELAS || '').trim().toLowerCase().replace(/\s+/g, ' '); return tKelas === kelasSantri || tKelas.includes(kelasSantri) || kelasSantri.includes(tKelas); });
+  const targetInput = document.getElementById('prog-nilai-target');
+  
+  if (!targetData) { 
+      targetInput.value = "Target Belum Ada"; 
+      targetInput.className = "w-full bg-gray-100 border border-gray-200 rounded-2xl p-4 text-xl font-bold text-gray-500 text-center shadow-inner"; 
+      return; 
+  }
+  if (!surahPilihan) { 
+      targetInput.value = ""; 
+      targetInput.className = "w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-2xl font-bold text-[#044343] text-center shadow-inner"; 
+      return; 
+  }
+
+  let sAwal = targetData.surat_awal || targetData.SURAT_AWAL || targetData.surah_awal || '-'; 
+  let sAkhir = targetData.surat_akhir || targetData.SURAT_AKHIR || targetData.surah_akhir || '-';
+  const idxPilihan = DAFTAR_SURAH.indexOf(surahPilihan) + 1, idxAwal = DAFTAR_SURAH.indexOf(sAwal) + 1, idxAkhir = DAFTAR_SURAH.indexOf(sAkhir) + 1;
+  
+  if (idxAwal > 0 && idxAkhir > 0 && idxPilihan > 0) {
+    const totalSurahTarget = Math.abs(idxAwal - idxAkhir) + 1; 
+    const totalDicapai = Math.abs(idxAwal - idxPilihan) + 1;
+    let persen = (totalDicapai / totalSurahTarget) * 100; 
+    if (persen > 100) persen = 100;
+    
+    let roundedVal = Math.round(persen);
+    targetInput.value = roundedVal + "%";
+    
+    if (roundedVal >= 100) {
+        targetInput.className = "w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-2xl font-bold text-emerald-600 text-center shadow-inner";
+    } else if (roundedVal >= 90 && roundedVal < 100) {
+        targetInput.className = "w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 text-2xl font-bold text-amber-600 text-center shadow-inner";
+    } else {
+        targetInput.className = "w-full bg-red-50 border border-red-200 rounded-2xl p-4 text-2xl font-bold text-red-600 text-center shadow-inner";
+    }
+  } else { 
+      targetInput.value = "Cek Ejaan"; 
+  }
+};
+
+window.renderPengaturan = function() {
+  if (!window.isKoordinator()) { state.activeTab = 'beranda'; return window.renderBeranda(); }
+  return `
+    <div class="px-5 pt-6">
+      <div class="flex justify-between items-center mb-6"><h2 class="text-lg font-bold text-[#044343] leading-tight">Pengaturan</h2><button onclick="window.switchTab('beranda')" class="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:text-[#044343] shadow-sm transition-colors"><i class="fas fa-arrow-left text-xs"></i></button></div>
+      <div class="bg-white rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 p-6 mb-8">
+        <form onsubmit="window.handleSavePengaturan(event)" class="space-y-4">
+          <div class="flex flex-col items-center mb-6 border-b border-gray-50 pb-6"><div class="w-24 h-24 mb-4 rounded-full border border-gray-100 bg-[#F4EFE6] flex items-center justify-center overflow-hidden shadow-sm p-1"><img id="preview-logo" src="${state.pengaturan.logo || 'https://via.placeholder.com/150?text=Logo'}" class="w-full h-full object-contain rounded-full"></div><label class="bg-[#F4EFE6] text-[#044343] text-xs font-semibold py-2 px-5 rounded-xl cursor-pointer border border-gray-200 transition-colors shadow-sm"><i class="fas fa-camera mr-1.5"></i> Ganti Logo<input type="file" accept="image/png, image/jpeg" class="hidden" onchange="window.compressAndPreviewImage(event)"></label><input type="hidden" id="inp-logo-base64" value="${state.pengaturan.logo}"></div>
+          <div><label class="block text-xs font-semibold text-gray-700 mb-1.5 ml-1">Nama Lembaga</label><input type="text" id="set-lembaga" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-sm focus:border-[#044343] outline-none text-gray-800" value="${state.pengaturan.nama_lembaga || ''}" required></div>
+          <div><label class="block text-xs font-semibold text-gray-700 mb-1.5 ml-1">Kepala Sekolah</label><input type="text" id="set-pimpinan" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-sm focus:border-[#044343] outline-none text-gray-800" value="${state.pengaturan.nama_pimpinan || ''}" required></div>
+          <div><label class="block text-xs font-semibold text-gray-700 mb-1.5 ml-1">Koordinator Tahsin & Tahfidz</label><input type="text" id="set-koordinator" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-sm focus:border-[#044343] outline-none text-gray-800" value="${state.pengaturan.nama_koordinator || ''}"></div>
+          <div><label class="block text-xs font-semibold text-gray-700 mb-1.5 ml-1">Alamat</label><textarea id="set-alamat" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-sm focus:border-[#044343] outline-none text-gray-800" rows="2">${state.pengaturan.alamat || ''}</textarea></div>
+          <div><label class="block text-xs font-semibold text-gray-700 mt-2 mb-1.5 ml-1"><i class="fab fa-whatsapp text-emerald-500"></i> Link Grup WA</label><input type="text" id="set-wa" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-sm focus:border-[#044343] outline-none text-gray-800" value="${state.pengaturan.link_wa || ''}"></div>
+          <button type="submit" class="w-full bg-[#044343] hover:bg-[#023131] text-white font-semibold py-4 rounded-2xl mt-6 shadow-lg transition-all">Simpan Pengaturan</button>
+        </form>
+      </div>
+    </div>
+  `;
+};
+
+window.renderInputSetoran = function() {
+  const optSurah = DAFTAR_SURAH.map((s, i) => `<option value="${s}">${i+1}. ${s}</option>`).join('');
+  
+  let fields = '';
+  if (state.inputType === 'hafalan') {
+    fields = `
+      <div class="space-y-4">
+        <div class="bg-emerald-50/50 p-3 rounded-2xl border border-emerald-100">
+          <label class="block text-xs font-bold text-emerald-900 mb-2"><i class="fas fa-check-circle text-emerald-600 mr-1"></i> Hafalan Hari Ini</label>
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600 mb-1 ml-1">Mulai Surah</label>
+              <select id="inp-surah" class="w-full bg-white border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343] appearance-none" required>
+                <option value="">Pilih Surah...</option>${optSurah}
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600 mb-1 ml-1">S/d Surah <span class="text-gray-400 font-normal">(Opsional)</span></label>
+              <select id="inp-surah-akhir" class="w-full bg-white border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343] appearance-none">
+                <option value="">-- Sama --</option>${optSurah}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-semibold text-gray-600 mb-1 ml-1">Ayat</label>
+            <input type="text" id="inp-ayat" class="w-full bg-white border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343]" placeholder="Contoh: 1-10" required>
+          </div>
+        </div>
+
+        <div class="bg-amber-50/50 p-3 rounded-2xl border border-amber-100">
+          <label class="block text-xs font-bold text-amber-900 mb-2"><i class="fa-solid fa-arrow-right text-amber-600 mr-1"></i> Tugas Selanjutnya</label>
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600 mb-1 ml-1">Mulai Surah</label>
+              <select id="inp-surah-next" class="w-full bg-white border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343] appearance-none">
+                <option value="-">Tidak ada tugas</option>${optSurah}
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-gray-600 mb-1 ml-1">S/d Surah <span class="text-gray-400 font-normal">(Opsional)</span></label>
+              <select id="inp-surah-next-akhir" class="w-full bg-white border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343] appearance-none">
+                <option value="">-- Sama --</option>${optSurah}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-semibold text-gray-600 mb-1 ml-1">Ayat (Opsional)</label>
+            <input type="text" id="inp-ayat-next" class="w-full bg-white border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343]" placeholder="Contoh: 11-15">
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (state.inputType === 'tilawah') {
+    fields = `<div><label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Batas Tilawah</label><input type="text" id="inp-tilawah" class="w-full bg-white border border-gray-200 rounded-2xl p-3.5 text-xs outline-none focus:border-[#044343]" placeholder="Iqro 6 Hal 15" required></div>`;
+  } else {
+    fields = `<div><label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Hadits/Doa</label><input type="text" id="inp-hadits" class="w-full bg-white border border-gray-200 rounded-2xl p-3.5 text-xs outline-none focus:border-[#044343]" placeholder="Arba'in ke-1" required></div>`;
+  }
+
+  let listKelas = [...new Set((state.santri || []).map(s => s.kelas || s.KELAS).filter(Boolean))].sort();
+
+  return `
+    <div class="px-5 pt-6">
+      <div class="flex justify-between items-center mb-6"><h2 class="text-lg font-bold text-[#044343] leading-tight">Input Setoran</h2></div>
+      <div class="bg-white rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 p-5">
+        <div class="flex bg-[#F4EFE6] p-1.5 rounded-2xl mb-6 border border-gray-200/60">
+          ${['hafalan','tilawah','hadits'].map(t => `<button type="button" onclick="window.switchInputType('${t}')" class="flex-1 py-2.5 text-xs font-semibold rounded-xl transition-all ${state.inputType === t ? 'bg-white shadow-sm text-[#044343] border border-gray-200/60' : 'text-gray-500 hover:text-gray-700'} capitalize">${t}</button>`).join('')}
+        </div>
+        <form onsubmit="window.handleSubmitSetoran(event)" class="space-y-4">
+          <div class="grid grid-cols-1 gap-3">
+            <select id="inp-filter-kelas" onchange="window.handleSelectKelasInput(this.value)" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3.5 text-xs text-gray-700 outline-none focus:border-[#044343] appearance-none font-medium"><option value="">Semua Kelas</option>${listKelas.map(k => `<option value="${k}" ${state.selectedInputKelas === k ? 'selected' : ''}>${k}</option>`).join('')}</select>
+          </div>
+          <div><select id="inp-santri" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3.5 text-sm focus:border-[#044343] outline-none font-semibold text-gray-800 appearance-none" required><option value="">-- Pilih Murid --</option></select></div>
+          
+          <div class="bg-[#F4EFE6] p-4 rounded-2xl border border-gray-200/60 shadow-inner">${fields}</div>
+          
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Kualitas</label><select id="inp-kualitas" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3.5 text-xs outline-none focus:border-[#044343] appearance-none font-medium"><option value="Muntaz">Muntaz</option><option value="Jayyid">Jayyid</option><option value="Maqbul">Maqbul</option><option value="Rasib">Rasib</option></select></div>
+            <div><label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Catatan</label><textarea id="inp-catatan" rows="1" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3.5 text-xs outline-none focus:border-[#044343]" placeholder="Opsional..."></textarea></div>
+          </div>
+
+          <!-- MODUL REKAM AUDIO -->
+          <div class="bg-blue-50/40 p-4 rounded-2xl border border-blue-100">
+            <label class="block text-xs font-bold text-blue-900 mb-3"><i class="fas fa-microphone text-blue-600 mr-1.5"></i> Rekam Talqin (Opsional)</label>
+            <div class="flex flex-col gap-2 items-center w-full">
+              <div class="flex w-full gap-2">
+                <button type="button" id="btn-start-record" onclick="window.startRecording()" class="flex-1 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"><i class="fas fa-microphone"></i> Mulai Rekam</button>
+                <button type="button" id="btn-stop-record" onclick="window.stopRecording()" class="hidden flex-1 bg-red-500 border border-red-600 text-white hover:bg-red-600 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"><i class="fas fa-stop-circle"></i> Hentikan</button>
+              </div>
+              <div id="recording-indicator" class="hidden text-[10px] text-red-500 font-bold animate-pulse mt-1">
+                Sedang merekam... <span id="record-time">00:00</span>
+              </div>
+              <audio id="audio-preview" controls class="w-full h-9 mt-2 hidden rounded-lg"></audio>
+              <button type="button" id="btn-hapus-rekaman" onclick="window.hapusRekaman()" class="text-[10px] text-gray-500 hover:text-red-500 underline hidden mt-1">Hapus Rekaman</button>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full bg-[#044343] hover:bg-[#023131] text-white font-semibold py-4 rounded-2xl shadow-[0_8px_20px_rgba(4,67,67,0.2)] mt-6 transition-all text-sm">Simpan Laporan</button>
+        </form>
+      </div>
+    </div>
+  `;
+};
+
+window.handleSelectKelasInput = function(kelasVal) { state.selectedInputKelas = kelasVal; window.populateSantriSelect(); };
+window.populateSantriSelect = function() {
+  const sel = document.getElementById('inp-santri'); if(!sel) return;
+  let filteredSantri = state.santri;
+  if (state.selectedInputKelas) filteredSantri = filteredSantri.filter(s => String(s.kelas || s.KELAS || '').trim().toLowerCase() === String(state.selectedInputKelas).trim().toLowerCase());
+  if(filteredSantri.length === 0) sel.innerHTML = '<option value="">(Kosong)</option>';
+  else sel.innerHTML = '<option value="">-- Pilih Murid --</option>' + filteredSantri.map(s => `<option value="${s.id_santri || s.ID_SANTRI}">${s.nama_santri || s.nama || s.NAMA_SANTRI || 'Tanpa Nama'}</option>`).join('');
+};
+
+window.openDetailGrup = function(tipe, namaGrup) {
+    document.getElementById('detail-grup-title').innerText = (tipe === 'kelas' ? 'Kelas ' : 'Halaqah ') + namaGrup;
+    
+    let listMurid = (state.santri || []).filter(s => {
+        let val = tipe === 'kelas' ? (s.kelas || s.KELAS) : (s.halaqah || s.HALAQAH);
+        return String(val).trim() === String(namaGrup).trim();
+    });
+    
+    document.getElementById('detail-grup-count').innerText = listMurid.length + ' Murid';
+    
+    let contentHtml = '';
+    if (listMurid.length === 0) {
+        contentHtml = `<div class="text-center p-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-gray-400 text-xs mt-4">Belum ada murid di ${tipe} ini.</div>`;
+    } else {
+        contentHtml = listMurid.map(s => {
+            let nama = s.nama_santri || s.nama || s.NAMA_SANTRI || s.Nama || 'Tanpa Nama';
+            let generatedUsername = nama.toLowerCase().replace(/\s+/g, '');
+            let generatedPassword = 'sditds';
+            
+            let uname = s.username || s.USERNAME || s.Username || s['Username'] || s['username'] || generatedUsername;
+            let pass = s.password || s.PASSWORD || s.Password || s['Password'] || s['password'] || generatedPassword;
+            
+            return `
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 murid-detail-card mb-3">
+                <h4 class="font-bold text-sm text-gray-800 mb-3 border-b border-gray-50 pb-2 flex items-center"><div class="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex justify-center items-center mr-2"><i class="fas fa-user-graduate text-[10px]"></i></div> ${nama}</h4>
+                <div class="grid grid-cols-1 gap-2">
+                    <div class="flex items-center justify-between bg-[#F4EFE6] p-2.5 rounded-xl border border-gray-200">
+                        <div>
+                            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Username</p>
+                            <p class="text-xs font-bold text-gray-800">${uname}</p>
+                        </div>
+                        <button onclick="window.copyCredential('${uname}')" class="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-[#044343] hover:border-[#044343] flex items-center justify-center transition-all shadow-sm" title="Salin Username">
+                            <i class="far fa-copy text-xs"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between bg-[#F4EFE6] p-2.5 rounded-xl border border-gray-200">
+                        <div>
+                            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Password</p>
+                            <p class="text-xs font-bold text-gray-800">${pass}</p>
+                        </div>
+                        <button onclick="window.copyCredential('${pass}')" class="w-8 h-8 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-[#044343] hover:border-[#044343] flex items-center justify-center transition-all shadow-sm" title="Salin Password">
+                            <i class="far fa-copy text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+    
+    document.getElementById('detail-grup-content').innerHTML = contentHtml;
+    window.openModal('modal-detail-grup');
+};
+
+window.renderDataKelas = function() {
+  let listKelas = (state.kelas || []).map(k => {
+      let namaK = k.nama_kelas || k.NAMA_KELAS;
+      let countMurid = (state.santri || []).filter(s => String(s.kelas || s.KELAS).trim() === String(namaK).trim()).length;
+      return `
+      <div onclick="window.openDetailGrup('kelas', '${namaK}')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:border-[#044343]/30 hover:shadow-md transition-all cursor-pointer group">
+          <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                  <i class="fas fa-chalkboard text-sm"></i>
+              </div>
+              <div>
+                  <h4 class="font-bold text-sm text-gray-800 group-hover:text-[#044343] transition-colors">${namaK}</h4>
+                  <p class="text-[10px] text-gray-500 font-medium mt-0.5"><i class="fas fa-users mr-1"></i> ${countMurid} Murid</p>
+              </div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-all">
+              <i class="fas fa-chevron-right text-xs"></i>
+          </div>
+      </div>`;
+  }).join('');
+
+  let listHalaqah = (state.halaqah || []).map(h => {
+      let namaH = h.nama_halaqah || h.NAMA_HALAQAH;
+      let countMurid = (state.santri || []).filter(s => String(s.halaqah || s.HALAQAH).trim() === String(namaH).trim()).length;
+      return `
+      <div onclick="window.openDetailGrup('halaqah', '${namaH}')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:border-[#044343]/30 hover:shadow-md transition-all cursor-pointer group">
+          <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                  <i class="fas fa-users text-sm"></i>
+              </div>
+              <div>
+                  <h4 class="font-bold text-sm text-gray-800 group-hover:text-[#044343] transition-colors">${namaH}</h4>
+                  <p class="text-[10px] text-gray-500 font-medium mt-0.5"><i class="fas fa-users mr-1"></i> ${countMurid} Murid</p>
+              </div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-purple-600 group-hover:bg-purple-50 transition-all">
+              <i class="fas fa-chevron-right text-xs"></i>
+          </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="px-5 pt-6 space-y-8">
+      <div>
+        <div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold text-[#044343] leading-tight">Data Kelas</h2><button onclick="window.openModal('modal-kelas')" class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-colors shadow-sm"><i class="fas fa-plus text-xs"></i></button></div>
+        <div class="space-y-3">${listKelas || `<div class="text-center p-6 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400 text-xs">Belum ada data</div>`}</div>
+      </div>
+      <div>
+        <div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold text-[#044343] leading-tight">Data Halaqah</h2><button onclick="window.openModal('modal-halaqah')" class="w-8 h-8 rounded-full bg-purple-50 text-purple-600 hover:bg-purple-500 hover:text-white flex items-center justify-center transition-colors shadow-sm"><i class="fas fa-plus text-xs"></i></button></div>
+        <div class="space-y-3">${listHalaqah || `<div class="text-center p-6 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400 text-xs">Belum ada data</div>`}</div>
+      </div>
+    </div>
+    
+    <div id="modal-detail-grup" class="app-modal">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 h-[85vh] flex flex-col shadow-2xl border border-gray-100">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-50">
+                <div>
+                    <h3 class="font-bold text-[#044343] text-lg" id="detail-grup-title">Detail Kelas</h3>
+                    <p class="text-[10px] text-gray-500 font-medium" id="detail-grup-count">0 Murid</p>
+                </div>
+                <button type="button" onclick="window.closeModal('modal-detail-grup')" class="w-8 h-8 bg-gray-50 hover:bg-red-50 hover:text-red-500 rounded-full flex items-center justify-center transition-colors text-gray-400">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="relative mb-4 shrink-0">
+                <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i>
+                <input type="text" onkeyup="window.searchData('.murid-detail-card', this.value)" placeholder="Cari nama murid..." class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#044343] text-gray-700">
+            </div>
+            
+            <div id="detail-grup-content" class="flex-grow overflow-y-auto space-y-3 pb-4 overscroll-contain"></div>
+        </div>
+    </div>
+
+    <div id="modal-kelas" class="app-modal"><div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-gray-100"><div class="flex justify-between items-center mb-5"><h3 class="font-bold text-[#044343]">Tambah Kelas</h3><button type="button" onclick="window.closeModal('modal-kelas')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button></div><form onsubmit="window.handleAddKelas(event)"><input type="text" id="inp-nama-kelas" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm mb-4 outline-none focus:border-[#044343]" placeholder="Contoh: 1 Abu Bakar" required><button type="submit" class="w-full bg-[#044343] text-white py-4 rounded-2xl font-semibold shadow-lg">Simpan</button></form></div></div>
+    
+    <div id="modal-halaqah" class="app-modal"><div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-gray-100"><div class="flex justify-between items-center mb-5"><h3 class="font-bold text-[#044343]">Tambah Halaqah</h3><button type="button" onclick="window.closeModal('modal-halaqah')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button></div><form onsubmit="window.handleAddHalaqah(event)"><input type="text" id="inp-nama-halaqah" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm mb-4 outline-none focus:border-[#044343]" placeholder="Contoh: Kelompok A" required><button type="submit" class="w-full bg-[#044343] text-white py-4 rounded-2xl font-semibold shadow-lg">Simpan</button></form></div></div>
+  `;
+};
+
+window.renderDataUstadz = function() {
+  let list = state.ustadz.map(u => {
+    let idU = u.id_user || u.ID_USER || u.id || ''; let namaU = u.nama_lengkap || u.NAMA_LENGKAP || ''; let userU = u.username || u.USERNAME || ''; let isProtected = (idU === 'U001' || userU.toLowerCase() === 'admin');
+    return `
+      <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-3 flex items-center justify-between hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-[#044343]/5 text-[#044343] flex items-center justify-center border border-[#044343]/10"><i class="fas fa-user-tie text-lg"></i></div>
+          <div><h4 class="font-bold text-sm text-gray-800">${namaU}</h4><p class="text-[10px] text-gray-500 font-medium mt-0.5">@${userU}</p></div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          ${window.isKoordinator() ? `<button onclick="window.openEditUstadz('${idU}')" class="w-8 h-8 rounded-full bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center transition-colors" title="Edit Akun"><i class="fas fa-edit text-xs"></i></button>` : ''}
+          ${window.isKoordinator() && !isProtected ? `<button onclick="window.confirmDeleteUstadz('${idU}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-colors" title="Hapus Akun"><i class="fas fa-trash text-xs"></i></button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="px-5 pt-6">
+      <div class="flex justify-between items-center mb-6"><h2 class="text-lg font-bold text-[#044343] leading-tight">Data Asatidz</h2><button onclick="window.switchTab('beranda')" class="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:text-[#044343] shadow-sm transition-colors"><i class="fas fa-arrow-left text-xs"></i></button></div>
+      ${window.isKoordinator() ? `<button onclick="window.openModal('modal-ustadz')" class="w-full bg-[#044343] hover:bg-[#023131] text-white py-4 rounded-2xl text-sm font-semibold mb-5 shadow-lg transition-all">Tambah Akun</button>` : ''}
+      <div class="relative mb-5">
+        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i>
+        <input type="text" onkeyup="window.searchData('.bg-white.p-4.rounded-3xl', this.value)" placeholder="Cari Ustadz..." class="w-full bg-white border border-gray-100 rounded-2xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700">
+      </div>
+      ${list || `<div class="text-center p-8 bg-white rounded-3xl border border-gray-100 text-gray-400 text-xs">Belum ada data</div>`}
+    </div>
+
+    <div id="modal-ustadz" class="app-modal">
+      <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-gray-100">
+        <div class="flex justify-between items-center mb-5"><h3 class="font-bold text-[#044343]">Tambah Akun Ustadz</h3><button type="button" onclick="window.closeModal('modal-ustadz')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button></div>
+        <form onsubmit="window.handleAddUstadz(event)" class="space-y-4">
+          <input type="text" id="ust-nama" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343]" placeholder="Nama Lengkap" required>
+          <input type="text" id="ust-user" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343]" placeholder="Username" required>
+          <input type="password" id="ust-pass" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343]" placeholder="Password" required>
+          <button type="submit" class="w-full bg-[#044343] text-white py-4 rounded-2xl font-semibold shadow-lg">Simpan</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="modal-edit-ustadz" class="app-modal">
+      <div class="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-gray-100">
+        <div class="flex justify-between items-center mb-5"><h3 class="font-bold text-[#044343]">Edit Akun Ustadz</h3><button type="button" onclick="window.closeModal('modal-edit-ustadz')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button></div>
+        <form onsubmit="window.submitEditUstadz(event)" class="space-y-4">
+          <input type="hidden" id="edit-ust-id">
+          <div><label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Nama Lengkap</label><input type="text" id="edit-ust-nama" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343]" required></div>
+          <div><label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Username</label><input type="text" id="edit-ust-user" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343]" required></div>
+          <div><label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Password Baru</label><input type="text" id="edit-ust-pass" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343]" placeholder="Kosongkan jika tidak diubah"></div>
+          <button type="submit" class="w-full bg-[#044343] text-white py-4 rounded-2xl font-semibold shadow-lg">Simpan Perubahan</button>
+        </form>
+      </div>
+    </div>
+  `;
+};
+
+window.renderRiwayatUstadz = function() {
+  const namaLogin = String(state.user.nama_lengkap || '').trim().toLowerCase();
+  let myRiwayat = state.setoran.filter(s => { const ustadzSetoran = String(s.nama_ustadz || s.NAMA_USTADZ || s.Ustadz || s.USTADZ || '').trim().toLowerCase(); if (ustadzSetoran && (ustadzSetoran.includes(namaLogin) || namaLogin.includes(ustadzSetoran))) return true; return false; });
+
+  let cards = myRiwayat.map((s) => {
+    let kualitas = s.kualitas || s.KUALITAS || 'Jayyid'; 
+    let isGood = kualitas.includes('Lancar') || kualitas.includes('Muntaz') || kualitas.includes('Jayyid'); 
+    let bgBadge = isGood ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'; 
+    
+    let rawSurah = String(s.surah || s.SURAH || '-');
+    let hariIniText = rawSurah;
+    let akanDatangText = '';
+    if (rawSurah.includes(' | Akan Datang: ')) {
+      let parts = rawSurah.split(' | Akan Datang: ');
+      hariIniText = parts[0];
+      akanDatangText = parts[1];
+    }
+
+    let ayatClean = window.formatAyatClean(s.ayat);
+    let detailHtml = `
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-xs bg-emerald-50/50 px-3 py-2 rounded-xl border border-emerald-100">
+          <span class="font-bold text-emerald-900"><i class="fas fa-check-circle text-emerald-600 mr-1.5"></i> Hari Ini:</span>
+          <span class="font-bold text-gray-800">${hariIniText} ${ayatClean && ayatClean !== '-' ? '('+ayatClean+')' : ''}</span>
+        </div>
+        ${akanDatangText ? `
+        <div class="flex items-center justify-between text-xs bg-amber-50/50 px-3 py-2 rounded-xl border border-amber-100">
+          <span class="font-bold text-amber-900"><i class="fa-solid fa-arrow-right text-amber-600 mr-1.5"></i> Tugas Selanjutnya:</span>
+          <span class="font-bold text-gray-800">${akanDatangText}</span>
+        </div>` : ''}
+      </div>
+    `;
+
+    if (!rawSurah.includes(' | Akan Datang: ') && (s.tilawah && s.tilawah !== '-')) {
+      detailHtml = `<p class="text-xs font-bold text-[#044343]">${s.tilawah}</p>`;
+    } else if (!rawSurah.includes(' | Akan Datang: ') && (s.hadits && s.hadits !== '-')) {
+      detailHtml = `<p class="text-xs font-bold text-[#044343]">${s.hadits}</p>`;
+    }
+
+    let namaSantriFinal = s.nama_santri || s.NAMA_SANTRI || s.nama || s.NAMA;
+    if (!namaSantriFinal || namaSantriFinal === '-') { const stObj = state.santri.find(st => String(st.id_santri || st.ID_SANTRI) === String(s.id_santri || s.ID_SANTRI)); namaSantriFinal = stObj ? (stObj.nama_santri || stObj.NAMA_SANTRI || stObj.nama) : 'Tanpa Nama'; }
+    let tglFormatted = s.tanggal ? new Date(s.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Hari Ini';
+
+    return `
+    <div class="bg-white p-4 rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-4 relative hover:border-gray-200 transition-colors">
+      <div class="absolute top-4 right-4 flex gap-1.5"><button onclick="window.openEditSetoran('${s.id_setoran || s.ID_SETORAN}')" class="w-7 h-7 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-full flex items-center justify-center transition-colors"><i class="fas fa-edit text-[10px]"></i></button><button onclick="window.confirmDeleteSetoran('${s.id_setoran || s.ID_SETORAN}')" class="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-500 rounded-full flex items-center justify-center transition-colors"><i class="fas fa-trash text-[10px]"></i></button></div>
+      <span class="text-[9px] font-semibold text-gray-400 block mb-1 uppercase tracking-wider">${tglFormatted}</span>
+      <h4 class="font-bold text-sm text-gray-800 pr-16 mb-2">${namaSantriFinal}</h4>
+      <div class="mb-2">${detailHtml}</div>
+      <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+        <span class="px-3 py-1.5 rounded-xl text-[10px] font-bold ${bgBadge}">${kualitas}</span>
+        ${s.catatan && s.catatan !== '-' ? `<span class="text-[10px] text-gray-500 italic truncate max-w-[200px]">"${s.catatan}"</span>` : ''}
+      </div>
+    </div>
+  `}).join('');
+
+  return `
+    <div class="px-5 pt-6">
+      <div class="flex justify-between items-center mb-6"><h2 class="text-lg font-bold text-[#044343] leading-tight">Riwayat</h2><span class="text-[10px] font-bold bg-[#D4AF37]/10 text-[#D4AF37] px-3 py-1 rounded-full">${myRiwayat.length} Data</span></div>
+      <div class="relative mb-5"><i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i><input type="text" onkeyup="window.searchData('.bg-white.p-4.rounded-3xl', this.value)" placeholder="Cari Riwayat..." class="w-full bg-white border border-gray-100 rounded-2xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700"></div>
+      ${cards || `<div class="text-center p-8 bg-white rounded-3xl border border-gray-100 text-gray-400 text-xs">Belum ada riwayat.</div>`}
+    </div>
+    
+    <div id="modal-edit-setoran" class="app-modal"><div class="bg-white rounded-3xl w-full max-w-md p-6 h-[85vh] overflow-y-auto shadow-2xl border border-gray-100"><div class="flex justify-between items-center mb-5"><h3 class="font-bold text-[#044343]">Edit Laporan</h3><button type="button" onclick="window.closeModal('modal-edit-setoran')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button></div><form onsubmit="window.submitEditSetoran(event)" class="space-y-4"><input type="hidden" id="edit-id-setoran"><select id="edit-surah" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343] appearance-none"><option value="-">Kosong</option>${DAFTAR_SURAH.map(s => `<option value="${s}">${s}</option>`).join('')}</select><input type="text" id="edit-ayat" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343]" placeholder="Ayat"><input type="text" id="edit-tilawah" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343]" placeholder="Tilawah"><input type="text" id="edit-hadits" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343]" placeholder="Hadits"><select id="edit-kualitas" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343] appearance-none"><option value="Muntaz">Muntaz</option><option value="Jayyid">Jayyid</option><option value="Maqbul">Maqbul</option><option value="Rasib">Rasib</option></select><textarea id="edit-catatan" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-4 text-sm outline-none focus:border-[#044343]" placeholder="Catatan..."></textarea><button type="submit" class="w-full bg-[#044343] text-white font-semibold py-4 rounded-2xl mt-4 shadow-lg">Simpan Perubahan</button></form></div></div>
+  `;
+};
+
+window.switchInputType = function(type) { state.inputType = type; window.renderApp(); };
+
+window.handleSubmitSetoran = async function(e) {
+  e.preventDefault(); 
+  const sel = document.getElementById('inp-santri');
+  if(!sel || !sel.value) return Swal.fire('Peringatan', 'Pilih murid terlebih dahulu!', 'warning');
+  
+  let surahVal = '-', ayatVal = '-', surahNextVal = '-', ayatNextVal = '-', tilawahVal = '-', haditsVal = '-';
+  if (state.inputType === 'hafalan') { 
+    let sAwal = document.getElementById('inp-surah').value;
+    let sAkhir = document.getElementById('inp-surah-akhir').value;
+    surahVal = sAkhir ? `${sAwal} - ${sAkhir}` : sAwal;
+
+    let rawAyatInp = document.getElementById('inp-ayat').value.trim();
+    ayatVal = rawAyatInp ? "'" + rawAyatInp : '-';
+
+    let sNextAwal = document.getElementById('inp-surah-next').value;
+    let sNextAkhir = document.getElementById('inp-surah-next-akhir').value;
+    surahNextVal = (sNextAwal && sNextAwal !== '-') ? (sNextAkhir ? `${sNextAwal} - ${sNextAkhir}` : sNextAwal) : '-';
+
+    let rawAyatNextInp = document.getElementById('inp-ayat-next').value.trim();
+    ayatNextVal = rawAyatNextInp ? "'" + rawAyatNextInp : '-';
+    
+    if (!sAwal || sAwal === '-') return Swal.fire('Peringatan', 'Silakan pilih Surah Hafalan Hari Ini!', 'warning'); 
+  } 
+  else if (state.inputType === 'tilawah') { tilawahVal = document.getElementById('inp-tilawah').value; }
+  else if (state.inputType === 'hadits') { haditsVal = document.getElementById('inp-hadits').value; }
+
+  let finalSurahText = surahVal;
+  if (state.inputType === 'hafalan' && surahNextVal && surahNextVal !== '-') {
+    let cleanAyatNext = ayatNextVal.replace(/^'/, '');
+    let textNext = surahNextVal + (cleanAyatNext && cleanAyatNext !== '-' ? ` (${cleanAyatNext})` : '');
+    finalSurahText = `${surahVal} | Akan Datang: ${textNext}`;
+  }
+
+  const santriName = sel.options[sel.selectedIndex].text.split(' (')[0];
+
+  // Tampilkan loading awal
+  Swal.fire({ title: 'Menyimpan Laporan...', html: 'Silakan tunggu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+  // ALUR UPLOAD AUDIO TALQIN
+  let audioUrlToSave = "-";
+  if (audioBase64) {
+      Swal.update({ html: 'Mengunggah rekaman suara...' });
+      const audioPayload = {
+          base64: audioBase64,
+          namaFile: 'Talqin_' + santriName.replace(/\s+/g, '_') + '_' + new Date().getTime()
+      };
+      
+      const resAudio = await window.apiCall('uploadAudioTalqin', audioPayload);
+      if (resAudio.success) {
+          audioUrlToSave = resAudio.url;
+      } else {
+          // Jika gagal unggah audio, tampilkan peringatan tapi tetap lanjutkan proses form
+          Swal.fire('Peringatan', 'Upload audio gagal, menyimpan data tanpa audio.', 'warning');
+      }
+  }
+
+  // ALUR SIMPAN DATA TEKS & LINK AUDIO
+  const payload = { 
+    tanggal: new Date().toISOString().split('T')[0], 
+    id_santri: sel.value, 
+    nama_santri: santriName, 
+    surah: finalSurahText, 
+    ayat: ayatVal, 
+    surah_next: surahNextVal, 
+    ayat_next: ayatNextVal,
+    tilawah: tilawahVal, 
+    hadits: haditsVal, 
+    kualitas: document.getElementById('inp-kualitas').value, 
+    catatan: document.getElementById('inp-catatan').value, 
+    nama_ustadz: state.user.nama_lengkap,
+    audio_talqin: audioUrlToSave // <- URL Audio disisipkan di sini
+  };
+
+  Swal.update({ html: 'Menyimpan riwayat setoran...' });
+  const res = await window.apiCall('addSetoran', payload);
+  
+  if(res.success) { 
+    window.playSuccessSound();
+    Swal.fire('Berhasil', res.message, 'success'); 
+    if(audioBase64) window.hapusRekaman(); // Reset form rekaman jika ada
+    window.loadDashboardData(); 
+  } else { 
+    Swal.fire('Gagal', res.message, 'error'); 
+  }
+};
+
+window.handleLogin = async function(e) {
+  e.preventDefault(); const u = document.getElementById('username').value.trim(), p = document.getElementById('password').value.trim();
+  const errorDiv = document.getElementById('login-error'), btn = document.getElementById('btn-login');
+  if(errorDiv) errorDiv.classList.add('hidden');
+  if(document.activeElement) document.activeElement.blur(); 
+  if(btn) { btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Memeriksa...'; btn.disabled = true; }
+  
+  const res = await window.apiCall('login', {username: u, password: p});
+  if (res.success) { 
+    state.user = res.user; state.activeTab = 'beranda'; state.activeTabOrtu = 'beranda'; 
+    window.renderApp(); window.loadDashboardData(); 
+  } else { 
+    if(btn) { btn.innerHTML = 'MASUK'; btn.disabled = false; } 
+    if(errorDiv) { errorDiv.innerHTML = res.message || 'Gagal login'; errorDiv.classList.remove('hidden'); } 
+  }
+};
+
+window.handleLogout = function() { state.user = null; location.reload(); };
+
+window.loadDashboardData = async function() {  
+  state.isLoading = true;  
+  window.renderApp();  
+  const role = String(state.user.role || '').trim().toLowerCase();
+  const isUstadz = role === 'ustadz' || role === 'admin';  
+  const targetIdSantri = state.user.id_santri || state.user.ID_Santri || state.user.ID_SANTRI || state.user.id_Santri || '';
+  
+  const res = await window.apiCall(isUstadz ? 'getDataUstadz' : 'getDataOrtu', isUstadz ? { user: state.user } : { id_santri: targetIdSantri });  
+  
+  if (res.success) state = { ...state, ...res };  
+
+  try {
+    const resKota = await fetch("https://api.myquran.com/v2/sholat/kota/cari/batam");
+    const jsonKota = await resKota.json();
+    if (jsonKota && jsonKota.data && jsonKota.data.length > 0) {
+      const idBatam = jsonKota.data[0].id; 
+      const todayStr = new Date().toISOString().split('T')[0];
+      const resSalat = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${idBatam}/${todayStr}`);
+      const jsonSalat = await resSalat.json();
+      if (jsonSalat && jsonSalat.status && jsonSalat.data && jsonSalat.data.jadwal) {
+        const j = jsonSalat.data.jadwal;
+        state.waktuSalat = { "Fajr": j.subuh, "Dhuhr": j.dzuhur, "Asr": j.ashar, "Maghrib": j.maghrib, "Isha": j.isya };
+      }
+    }
+  } catch (err) { state.waktuSalat = { "Fajr": "04:47", "Dhuhr": "12:10", "Asr": "15:29", "Maghrib": "18:15", "Isha": "19:26" }; }
+
+  state.isLoading = false;  
+  window.renderApp();  
+};
+
+window.compressAndPreviewImage = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { const img = new Image(); img.onload = function() { const canvas = document.createElement('canvas'), MAX_SIZE = 150; let width = img.width, height = img.height; if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } } else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } } canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d'); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, width, height); ctx.drawImage(img, 0, 0, width, height); const base64String = canvas.toDataURL('image/jpeg', 0.6); document.getElementById('preview-logo').src = base64String; document.getElementById('inp-logo-base64').value = base64String; }; img.src = e.target.result; }; reader.readAsDataURL(file); };
+window.handleSavePengaturan = async function(e) { e.preventDefault(); if (!window.isKoordinator()) return Swal.fire('Akses Ditolak', 'Hanya Admin.', 'error'); const payload = { nama_lembaga: document.getElementById('set-lembaga').value, nama_pimpinan: document.getElementById('set-pimpinan').value, nama_koordinator: document.getElementById('set-koordinator').value, logo: document.getElementById('inp-logo-base64').value, link_wa: document.getElementById('set-wa').value, alamat: document.getElementById('set-alamat').value }; if(document.activeElement) document.activeElement.blur(); Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); const res = await window.apiCall('savePengaturan', payload); if(res.success) { window.playSuccessSound(); Swal.fire('Berhasil', res.message, 'success'); state.pengaturan = payload; window.renderApp(); } };
+window.handleAddKelas = async function(e) { e.preventDefault(); window.closeModal('modal-kelas'); Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); const res = await window.apiCall('addKelas', {nama_kelas: document.getElementById('inp-nama-kelas').value}); if(res.success) { window.playSuccessSound(); Swal.fire('Berhasil', res.message, 'success'); window.loadDashboardData(); } };
+window.handleAddHalaqah = async function(e) { e.preventDefault(); window.closeModal('modal-halaqah'); Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); const res = await window.apiCall('addHalaqah', {nama_halaqah: document.getElementById('inp-nama-halaqah').value}); if(res.success) { window.playSuccessSound(); Swal.fire('Berhasil', res.message, 'success'); window.loadDashboardData(); } };
+window.handleAddUstadz = async function(e) { e.preventDefault(); window.closeModal('modal-ustadz'); Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); const res = await window.apiCall('addUstadz', {nama_lengkap: document.getElementById('ust-nama').value, username: document.getElementById('ust-user').value.trim(), password: document.getElementById('ust-pass').value}); if(res.success) { window.playSuccessSound(); Swal.fire('Berhasil', res.message, 'success'); window.loadDashboardData(); } };
+
+window.openEditUstadz = function(id) { const u = state.ustadz.find(x => String(x.id_user || x.ID_USER || x.id) === String(id)); if(!u) return; document.getElementById('edit-ust-id').value = u.id_user || u.ID_USER || u.id; document.getElementById('edit-ust-nama').value = u.nama_lengkap || u.NAMA_LENGKAP || ''; document.getElementById('edit-ust-user').value = u.username || u.USERNAME || ''; document.getElementById('edit-ust-pass').value = u.password || u.PASSWORD || ''; window.openModal('modal-edit-ustadz'); };
+window.submitEditUstadz = async function(e) { e.preventDefault(); window.closeModal('modal-edit-ustadz'); const payload = { id_user: document.getElementById('edit-ust-id').value, nama_lengkap: document.getElementById('edit-ust-nama').value, username: document.getElementById('edit-ust-user').value.trim(), password: document.getElementById('edit-ust-pass').value }; Swal.fire({ title: 'Memperbarui...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); const res = await window.apiCall('updateUstadz', payload); if(res.success) { window.playSuccessSound(); Swal.fire('Berhasil', res.message, 'success'); window.loadDashboardData(); } else { Swal.fire('Gagal', res.message, 'error'); } };
+window.confirmDeleteUstadz = function(id) { Swal.fire({ title: 'Hapus Akun Ustadz?', text: "Data akun ini akan dihapus permanen dari sistem!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Ya, Hapus!' }).then(async (r) => { if (r.isConfirmed) { Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); const res = await window.apiCall('deleteUstadz', { id_user: id }); if(res.success) { window.playSuccessSound(); Swal.fire('Terhapus', res.message, 'success'); window.loadDashboardData(); } else { Swal.fire('Gagal', res.message, 'error'); } } }); };
+
+window.handleSavePengumuman = async function(e) { e.preventDefault(); window.closeModal('modal-pengumuman'); Swal.fire({ title: 'Menyiarkan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); const res = await window.apiCall('savePengumuman', {pesan: document.getElementById('inp-pengumuman').value}); if(res.success) { window.playSuccessSound(); Swal.fire('Berhasil', res.message, 'success'); state.pengumuman = document.getElementById('inp-pengumuman').value; window.renderApp(); } };
+
+window.openEditSetoran = function(id) { const s = state.setoran.find(x => String(x.id_setoran || x.ID_SETORAN) === String(id)); if(!s) return; document.getElementById('edit-id-setoran').value = s.id_setoran || s.ID_SETORAN; document.getElementById('edit-surah').value = s.surah || s.SURAH || '-'; document.getElementById('edit-ayat').value = window.formatAyatClean(s.ayat || s.AYAT); document.getElementById('edit-tilawah').value = (s.tilawah || s.TILAWAH) === '-' ? '' : (s.tilawah || s.TILAWAH); document.getElementById('edit-hadits').value = (s.hadits || s.HADITS) === '-' ? '' : (s.hadits || s.HADITS); document.getElementById('edit-kualitas').value = s.kualitas || s.KUALITAS || 'Jayyid'; document.getElementById('edit-catatan').value = s.catatan || s.CATATAN || ''; window.openModal('modal-edit-setoran'); };
+window.submitEditSetoran = async function(e) { e.preventDefault(); let sv = document.getElementById('edit-surah').value, av = document.getElementById('edit-ayat').value, tv = document.getElementById('edit-tilawah').value, hv = document.getElementById('edit-hadits').value; const payload = { id_setoran: document.getElementById('edit-id-setoran').value, surah: !sv||sv==='-'?'-':sv, ayat: !av||av.trim()===''?'-': "'" + av.trim(), tilawah: !tv||tv.trim()===''?'-':tv, hadits: !hv||hv.trim()===''?'-':hv, kualitas: document.getElementById('edit-kualitas').value, catatan: document.getElementById('edit-catatan').value }; window.closeModal('modal-edit-setoran'); Swal.fire({ title: 'Memperbarui...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); const res = await window.apiCall('editSetoran', payload); if(res.success) { window.playSuccessSound(); Swal.fire('Berhasil', res.message, 'success'); window.loadDashboardData(); } };
+window.confirmDeleteSetoran = function(id) { Swal.fire({ title: 'Hapus?', text: "Tak dapat dikembalikan!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Ya, Hapus!' }).then(async (r) => { if (r.isConfirmed) { Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); const res = await window.apiCall('deleteSetoran', {id_setoran: id}); if(res.success) { window.playSuccessSound(); Swal.fire('Terhapus', res.message, 'success'); window.loadDashboardData(); } } }); };
+
+window.handleUpdateProgress = async function(e) {
+  e.preventDefault();
+  
+  const payload = {
+    id_santri: document.getElementById('prog-id').value,
+    jumlah_hafalan: document.getElementById('prog-hafalan').value,
+    murojaah: document.getElementById('prog-murojaah').value,
+    juz_hafal: document.getElementById('prog-surah-pilihan').value,
+    nilai_target: document.getElementById('prog-nilai-target').value
+  };
+
+  window.closeModal('modal-progress');
+  Swal.fire({ title: 'Menyimpan Progress...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  
+  const res = await window.apiCall('updateProgress', payload);
+  if (res.success) {
+    window.playSuccessSound();
+    Swal.fire('Berhasil', res.message, 'success');
+    window.loadDashboardData();
+  } else {
+    Swal.fire('Gagal', res.message, 'error');
+  }
+};
+
+document.addEventListener('DOMContentLoaded', window.renderApp);
+</script>
+</body>
+</html>
