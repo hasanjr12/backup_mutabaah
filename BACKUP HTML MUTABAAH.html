@@ -102,7 +102,7 @@
     position: fixed; /* <-- Ubah absolute menjadi fixed di sini */
     inset: 0; 
     background-color: rgba(0,0,0,0.5); 
-    z-index: 9999999; 
+    z-index: 1050; 
     align-items: center; 
     justify-content: center; 
     padding: 1rem; 
@@ -685,7 +685,9 @@ window.renderUstadzDashboard = function() {
   else if (state.activeTab === 'data-login-murid') bodyContent = window.renderDataLoginMurid(); 
   else if (state.activeTab === 'rapor-biru') bodyContent = window.renderRaporBiruForm();
   else if (state.activeTab === 'riwayat-rapor') bodyContent = window.renderRiwayatRaporTahfidz(); 
+  else if (state.activeTab === 'simak-online') bodyContent = window.renderSimakOnlineUstadz();
   else bodyContent = window.renderRiwayatUstadz();
+  
 
   const isInputActive = state.activeTab === 'input-setoran' || state.activeTab === 'rapor-biru';
   const isRiwayatActive = state.activeTab === 'riwayat' || state.activeTab === 'riwayat-rapor';
@@ -802,11 +804,11 @@ window.renderBeranda = function() {
           <div>
             <h3 class="text-sm font-bold text-gray-800 mb-2">Statistik Data</h3>
             <div class="grid grid-cols-4 gap-2">
-              <div onclick="window.switchTab('data-ustadz')" class="bg-white rounded-2xl aspect-square p-1 flex flex-col items-center justify-center shadow-sm border border-gray-100 cursor-pointer hover:border-[#044343]/30 transition-all text-center">
-                  <div class="w-6 h-6 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-1.5"><i class="fas fa-user-tie text-[10px]"></i></div>
-                  <p class="text-[11px] font-bold text-gray-800 leading-none mb-0.5">${state.ustadz.length}</p>
-                  <p class="text-[8px] font-medium text-gray-500 leading-tight">Asatidz</p>
-              </div>
+              <div onclick="window.switchTab('simak-online')" class="bg-white rounded-2xl aspect-square p-1 flex flex-col items-center justify-center shadow-sm border border-gray-100 cursor-pointer hover:border-[#044343]/30 transition-all text-center">
+    <div class="w-6 h-6 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-1.5"><i class="fas fa-headphones-alt text-[10px]"></i></div>
+    <p class="text-[11px] font-bold text-gray-800 leading-none mb-0.5">Simak</p>
+    <p class="text-[8px] font-medium text-gray-500 leading-tight">Online</p>
+</div>
               <div onclick="window.switchTab('rapor-biru')" class="bg-white rounded-2xl aspect-square p-1 flex flex-col items-center justify-center shadow-sm border border-gray-100 cursor-pointer hover:border-[#044343]/30 transition-all text-center">
                   <div class="w-6 h-6 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mb-1.5"><i class="fas fa-award text-[10px]"></i></div>
                   <p class="text-[11px] font-bold text-[#044343] leading-none mb-0.5">Input</p>
@@ -867,6 +869,277 @@ window.renderBeranda = function() {
       </div>
     </div>
   `;
+};
+window.renderSimakOnlineUstadz = function() {
+  const namaLogin = String(state.user.nama_lengkap || '').trim().toLowerCase();
+  const isSuperAdmin = window.isKoordinator();
+  
+  let baseOnline = (state.setoranOnline || []).filter(s => {
+      if (isSuperAdmin) return true;
+      let santriObj = state.santri.find(st => String(st.id_santri || st.ID_SANTRI) === String(s.id_santri || s.ID_SANTRI));
+      if(!santriObj) return false;
+      let halaqahSantri = String(santriObj.halaqah || santriObj.HALAQAH || '').trim().toLowerCase();
+      return halaqahSantri.includes(namaLogin) || namaLogin.includes(halaqahSantri);
+  });
+
+  let listKelas = []; let listSantri = []; let listTanggal = [];
+  
+  baseOnline.forEach(s => {
+      let santriObj = state.santri.find(st => String(st.id_santri || st.ID_SANTRI) === String(s.id_santri || s.ID_SANTRI));
+      let k = santriObj ? String(santriObj.kelas || santriObj.KELAS || '').trim() : '';
+      if (k && !listKelas.includes(k)) listKelas.push(k);
+      
+      let n = String(s.Nama_Santri || s.nama_santri).trim();
+      if (n && !listSantri.includes(n)) listSantri.push(n);
+      
+      let t = s.Tanggal || s.tanggal;
+      if (t) {
+          let tglStr = new Date(t).toLocaleDateString('id-ID');
+          if (!listTanggal.includes(tglStr)) listTanggal.push(tglStr);
+      }
+  });
+  
+  listKelas.sort(); listSantri.sort();
+  listTanggal.sort((a,b) => {
+      let [d1, m1, y1] = a.split('/'); let [d2, m2, y2] = b.split('/');
+      return new Date(`${y2}-${m2}-${d2}`) - new Date(`${y1}-${m1}-${d1}`);
+  });
+
+  let filteredOnline = baseOnline;
+  if (state.filterOnlineKelas) filteredOnline = filteredOnline.filter(s => { let santriObj = state.santri.find(st => String(st.id_santri || st.ID_SANTRI) === String(s.id_santri || s.ID_SANTRI)); return santriObj && String(santriObj.kelas || santriObj.KELAS || '').trim() === state.filterOnlineKelas; });
+  if (state.filterOnlineSantri) filteredOnline = filteredOnline.filter(s => String(s.Nama_Santri || s.nama_santri).trim() === state.filterOnlineSantri);
+  if (state.filterOnlineTanggal) filteredOnline = filteredOnline.filter(s => { let t = s.Tanggal || s.tanggal; return t && new Date(t).toLocaleDateString('id-ID') === state.filterOnlineTanggal; });
+
+  let optSurah = DAFTAR_SURAH.map((sur, idx) => `<option value="${sur}">${idx+1}. ${sur}</option>`).join('');
+
+  let cards = filteredOnline.map(s => {
+      let isBelum = (s.Status || s.status || '') === 'Belum dinilai';
+      let idOnline = s.ID_Online || s.id_online || s[0];
+      
+      let audioUrl = s.Audio_Url || s.audio_url || '-';
+      let audioHtml = '';
+      if (audioUrl && audioUrl !== '-' && String(audioUrl).startsWith('http')) {
+          let fileIdMatch = String(audioUrl).match(/[-\w]{25,}/);
+          if (fileIdMatch) {
+              let fileId = fileIdMatch[0];
+              audioHtml = `<div class="my-3 w-full overflow-hidden rounded-xl bg-gray-50 border border-gray-100" style="height: 44px;"><iframe src="https://drive.google.com/file/d/${fileId}/preview" width="100%" height="80" style="border:none; margin-top: -18px; pointer-events: auto;" scrolling="no"></iframe></div>`;
+          }
+      }
+
+      let actionHtml = isBelum ? `
+      <div class="mt-3 bg-[#F4EFE6] p-3 rounded-xl border border-gray-200 shadow-inner">
+        <form onsubmit="window.submitNilaiOnline(event, '${idOnline}')" class="space-y-3">
+           
+           <div class="grid grid-cols-2 gap-2">
+             <div>
+               <label class="text-[10px] font-bold text-gray-600 ml-1">Predikat</label>
+               <select id="predikat-${idOnline}" class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-blue-500 appearance-none font-semibold text-blue-900">
+                 <option value="Muntaz">Muntaz</option><option value="Jayyid">Jayyid</option><option value="Maqbul">Maqbul</option><option value="Rasib">Rasib</option>
+               </select>
+             </div>
+             <div>
+               <label class="text-[10px] font-bold text-gray-600 ml-1">Tugas Surah Besok</label>
+               <select id="surah-next-${idOnline}" class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-amber-500 appearance-none font-medium">
+                 <option value="-">- Tidak Ada -</option>${optSurah}
+               </select>
+             </div>
+           </div>
+           
+           <div class="grid grid-cols-2 gap-2">
+             <div>
+               <label class="text-[10px] font-bold text-gray-600 ml-1">Ayat Besok</label>
+               <input type="text" id="ayat-next-${idOnline}" class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-amber-500" placeholder="Contoh: 1-5">
+             </div>
+             <div>
+               <label class="text-[10px] font-bold text-gray-600 ml-1">Feedback / Catatan</label>
+               <input type="text" id="feedback-${idOnline}" class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs outline-none focus:border-blue-500" placeholder="Pesan untuk murid...">
+             </div>
+           </div>
+
+           <!-- REKAM TALQIN UNTUK USTADZ -->
+           <div class="bg-blue-50/40 p-3 rounded-xl border border-blue-100">
+              <label class="block text-[10px] font-bold text-blue-900 mb-2"><i class="fas fa-microphone text-blue-600 mr-1"></i> Rekam Audio Talqin (Opsional)</label>
+              <div class="flex flex-col gap-1.5 items-center w-full">
+                <div class="flex w-full gap-2">
+                  <button type="button" id="btn-start-talqin-${idOnline}" onclick="window.startTalqinUstadz('${idOnline}')" class="flex-1 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 transition-colors"><i class="fas fa-microphone"></i> Rekam</button>
+                  <button type="button" id="btn-stop-talqin-${idOnline}" onclick="window.stopTalqinUstadz('${idOnline}')" class="hidden flex-1 bg-red-500 text-white font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1"><i class="fas fa-stop-circle"></i> Stop</button>
+                </div>
+                <div id="indicator-talqin-${idOnline}" class="hidden text-[9px] text-red-500 font-bold animate-pulse">Merekam... <span id="time-talqin-${idOnline}">00:00</span></div>
+                <audio id="audio-preview-talqin-${idOnline}" controls class="w-full h-8 mt-1 hidden rounded-lg"></audio>
+                <button type="button" id="btn-hapus-talqin-${idOnline}" onclick="window.hapusTalqinUstadz('${idOnline}')" class="text-[9px] text-gray-400 hover:text-red-500 underline hidden">Hapus Rekaman</button>
+              </div>
+           </div>
+           
+           <button type="submit" class="w-full bg-[#044343] hover:bg-[#023131] text-white py-2.5 rounded-lg font-bold text-xs mt-1 transition-all flex items-center justify-center gap-1.5"><i class="fas fa-save"></i> Simpan Nilai & Kirim Talqin</button>
+        </form>
+      </div>
+      ` : `
+      <div class="mt-3 bg-emerald-50 p-2.5 rounded-xl border border-emerald-100 text-xs flex justify-between items-center">
+          <div>
+              <p class="font-bold text-emerald-800"><i class="fas fa-check-circle"></i> ${s.Predikat || s.predikat}</p>
+              <p class="text-[10px] text-gray-600 mt-1">Feedback: ${s.Feedback || s.feedback}</p>
+          </div>
+          <span class="text-[9px] text-emerald-500 font-bold bg-white px-2 py-1 rounded-md border border-emerald-100">Selesai Dinilai</span>
+      </div>
+      `;
+
+      return `
+      <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-4 riwayat-online-card">
+          <div class="flex justify-between items-start">
+             <div>
+                <h4 class="font-bold text-sm text-gray-800">${s.Nama_Santri || s.nama_santri}</h4>
+                <p class="text-[10px] text-gray-500 font-medium">Surah: <span class="font-bold text-blue-600">${s.Surah || s.surah} (${s.Ayat || s.ayat})</span></p>
+             </div>
+             <span class="text-[9px] font-semibold text-gray-400 block">${new Date(s.Tanggal || s.tanggal).toLocaleDateString('id-ID')}</span>
+          </div>
+          ${s.Catatan_Ortu && s.Catatan_Ortu !== '-' ? `<p class="text-[10px] text-gray-500 italic mt-2 bg-gray-50 p-2 rounded-lg border-l-2 border-blue-400">" ${s.Catatan_Ortu} "</p>` : ''}
+          ${audioHtml}
+          ${actionHtml}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="px-5 pt-6 pb-20">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-[#044343] leading-tight">Simak Setoran Online</h2>
+        <button onclick="window.switchTab('beranda')" class="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:text-[#044343] shadow-sm transition-colors"><i class="fas fa-arrow-left text-xs"></i></button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div class="relative"><select onchange="window.handleFilterOnlineKelas(this.value)" class="w-full bg-white border border-gray-100 rounded-xl pl-3 pr-8 py-2.5 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700 font-semibold appearance-none"><option value="">Semua Kelas</option>${listKelas.map(k => `<option value="${k}" ${state.filterOnlineKelas === k ? 'selected' : ''}>${k}</option>`).join('')}</select><i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 text-[10px] pointer-events-none"></i></div>
+        <div class="relative"><select onchange="window.handleFilterOnlineTanggal(this.value)" class="w-full bg-white border border-gray-100 rounded-xl pl-3 pr-8 py-2.5 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700 font-semibold appearance-none"><option value="">Semua Tanggal</option>${listTanggal.map(t => `<option value="${t}" ${state.filterOnlineTanggal === t ? 'selected' : ''}>${t}</option>`).join('')}</select><i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 text-[10px] pointer-events-none"></i></div>
+      </div>
+      <div class="relative mb-5"><select onchange="window.handleFilterOnlineSantri(this.value)" class="w-full bg-white border border-gray-100 rounded-xl pl-3 pr-8 py-2.5 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700 font-semibold appearance-none"><option value="">Semua Santri</option>${listSantri.map(n => `<option value="${n}" ${state.filterOnlineSantri === n ? 'selected' : ''}>${n}</option>`).join('')}</select><i class="fas fa-chevron-down absolute right-4 top-3 text-gray-400 text-[10px] pointer-events-none"></i></div>
+      
+      ${cards || '<div class="text-center p-8 bg-white rounded-3xl border border-gray-100 text-gray-400 text-xs shadow-sm">Tidak ada setoran yang cocok dengan filter.</div>'}
+    </div>
+  `;
+};
+
+// ==========================================
+// PEREKAM AUDIO TALQIN KHUSUS USTADZ
+// ==========================================
+let talqinMediaRecorder;
+let talqinAudioChunks = [];
+let talqinAudioBase64 = null;
+let talqinInterval;
+let talqinSeconds = 0;
+
+window.startTalqinUstadz = async function(idOnline) {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        talqinMediaRecorder = new MediaRecorder(stream);
+        talqinAudioChunks = [];
+
+        talqinMediaRecorder.ondataavailable = event => {
+            if (event.data.size > 0) talqinAudioChunks.push(event.data);
+        };
+
+        talqinMediaRecorder.onstop = () => {
+            const blob = new Blob(talqinAudioChunks, { type: 'audio/webm' });
+            const url = URL.createObjectURL(blob);
+            
+            const preview = document.getElementById('audio-preview-talqin-' + idOnline);
+            preview.src = url;
+            preview.classList.remove('hidden');
+            document.getElementById('btn-hapus-talqin-' + idOnline).classList.remove('hidden');
+
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = function() {
+                talqinAudioBase64 = reader.result;
+            }
+        };
+
+        talqinMediaRecorder.start();
+        document.getElementById('btn-start-talqin-' + idOnline).classList.add('hidden');
+        document.getElementById('btn-stop-talqin-' + idOnline).classList.remove('hidden');
+        document.getElementById('indicator-talqin-' + idOnline).classList.remove('hidden');
+
+        talqinSeconds = 0;
+        document.getElementById('time-talqin-' + idOnline).innerText = "00:00";
+        talqinInterval = setInterval(() => {
+            talqinSeconds++;
+            let m = String(Math.floor(talqinSeconds / 60)).padStart(2, '0');
+            let s = String(talqinSeconds % 60).padStart(2, '0');
+            let timeEl = document.getElementById('time-talqin-' + idOnline);
+            if(timeEl) timeEl.innerText = `${m}:${s}`;
+        }, 1000);
+
+    } catch (err) {
+        Swal.fire('Akses Ditolak', 'Mohon izinkan mikrofon di browser Anda.', 'error');
+    }
+};
+
+window.stopTalqinUstadz = function(idOnline) {
+    if (talqinMediaRecorder && talqinMediaRecorder.state === "recording") {
+        talqinMediaRecorder.stop();
+        talqinMediaRecorder.stream.getTracks().forEach(track => track.stop());
+        clearInterval(talqinInterval);
+        
+        document.getElementById('btn-start-talqin-' + idOnline).classList.remove('hidden');
+        document.getElementById('btn-start-talqin-' + idOnline).innerHTML = '<i class="fas fa-redo"></i> Ulangi';
+        document.getElementById('btn-stop-talqin-' + idOnline).classList.add('hidden');
+        document.getElementById('indicator-talqin-' + idOnline).classList.add('hidden');
+    }
+};
+
+window.hapusTalqinUstadz = function(idOnline) {
+    talqinAudioChunks = [];
+    talqinAudioBase64 = null;
+    const preview = document.getElementById('audio-preview-talqin-' + idOnline);
+    preview.src = "";
+    preview.classList.add('hidden');
+    document.getElementById('btn-hapus-talqin-' + idOnline).classList.add('hidden');
+    document.getElementById('btn-start-talqin-' + idOnline).innerHTML = '<i class="fas fa-microphone"></i> Rekam';
+};
+
+window.submitNilaiOnline = async function(e, idOnline) {
+    e.preventDefault();
+    
+    let ayatNextValue = document.getElementById('ayat-next-' + idOnline).value;
+    let safeAyatNext = (ayatNextValue && ayatNextValue.trim() !== '') ? "'" + ayatNextValue.trim() : '-';
+
+    Swal.fire({ title: 'Menyimpan & Mengunggah Talqin...', html: 'Mohon tunggu sebentar...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    let audioTalqinUrl = "-";
+    
+    // Cek apakah variabel rekaman talqin ustadz terisi
+    if (typeof talqinAudioBase64 !== 'undefined' && talqinAudioBase64) {
+        let audioPayload = {
+            base64: talqinAudioBase64,
+            namaFile: 'Talqin_Ustadz_' + new Date().getTime()
+        };
+        let resAudio = await window.apiCall('uploadAudioTalqin', audioPayload);
+        if (resAudio && resAudio.success) {
+            audioTalqinUrl = resAudio.url;
+        }
+    }
+
+    const payload = {
+        id_online: idOnline,
+        predikat: document.getElementById('predikat-' + idOnline).value,
+        feedback: document.getElementById('feedback-' + idOnline).value || '-',
+        surah_next: document.getElementById('surah-next-' + idOnline).value,
+        ayat_next: safeAyatNext,
+        nama_ustadz: state.user.nama_lengkap,
+        audio_talqin: audioTalqinUrl // Pastikan terkirim ke backend
+    };
+    
+    const res = await window.apiCall('nilaiSetoranOnline', payload);
+    if(res && res.success) {
+        window.playSuccessSound();
+        Swal.fire('Berhasil', res.message, 'success');
+        
+        // Bersihkan memori rekaman setelah sukses terkirim
+        if (typeof talqinAudioBase64 !== 'undefined') {
+            talqinAudioBase64 = null; 
+        }
+        
+        window.loadDashboardData();
+    } else {
+        Swal.fire('Gagal', (res ? res.message : 'Terjadi kesalahan sistem'), 'error');
+    }
 };
 window.renderRiwayatRaporTahfidz = function() {
   let listRapor = state.raporBiru || [];
@@ -1111,15 +1384,29 @@ window.renderOrtuDashboard = function() {
       </div>
     </header>
     <main class="flex-grow p-5 pb-36 overflow-y-auto h-full bg-[#F4EFE6]">
-        ${state.isLoading ? window.renderLoading() : (state.activeTabOrtu === 'amalan' ? window.renderOrtuMutabaah() : state.activeTabOrtu === 'nilai-surat' ? window.renderOrtuNilaiSurat() : window.renderOrtuBeranda())} 
+        ${state.isLoading ? window.renderLoading() : (state.activeTabOrtu === 'amalan' ? window.renderOrtuMutabaah() : state.activeTabOrtu === 'nilai-surat' ? window.renderOrtuNilaiSurat() : state.activeTabOrtu === 'setoran-online' ? window.renderOrtuSetoranOnline() : window.renderOrtuBeranda())} 
         ${!state.isLoading ? window.getWatermark() : ''}
     </main>
-    <nav class="floating-nav" style="background: rgba(244, 239, 230, 0.85);">
-        <button onclick="window.switchTabOrtu('beranda')" class="flex flex-col items-center justify-center w-full h-full gap-0.5 btn-active ${state.activeTabOrtu === 'beranda' ? 'text-[#9A7B0C] font-bold' : 'text-[#9A7B0C]/80'}"><i class="fas fa-home text-sm"></i><span class="text-[8px] uppercase tracking-wider font-semibold">Laporan</span></button>
+    <nav class="floating-nav" style="background: rgba(244, 239, 230, 0.4);">
+        <button onclick="window.switchTabOrtu('beranda')" class="flex flex-col items-center justify-center w-full h-full gap-0.5 btn-active transition-all duration-300 transform ${state.activeTabOrtu === 'beranda' ? 'scale-110 text-[#9A7B0C] font-bold drop-shadow-sm' : 'scale-90 text-[#9A7B0C]/60 hover:text-[#9A7B0C]'}" title="Laporan">
+            <i class="fas fa-home text-base"></i>
+            <span class="text-[8px] uppercase tracking-wider font-bold">Laporan</span>
+        </button>
         
-        <button onclick="window.switchTabOrtu('nilai-surat')" class="flex flex-col items-center justify-center w-full h-full gap-0.5 btn-active ${state.activeTabOrtu === 'nilai-surat' ? 'text-amber-700 font-bold' : 'text-amber-700/80'}"><i class="fas fa-award text-sm"></i><span class="text-[8px] uppercase tracking-wider font-semibold">Nilai Surat</span></button>
+        <button onclick="window.switchTabOrtu('nilai-surat')" class="flex flex-col items-center justify-center w-full h-full gap-0.5 btn-active transition-all duration-300 transform ${state.activeTabOrtu === 'nilai-surat' ? 'scale-110 text-amber-700 font-bold drop-shadow-sm' : 'scale-90 text-amber-700/60 hover:text-amber-700'}" title="Rapor">
+            <i class="fas fa-award text-base"></i>
+            <span class="text-[8px] uppercase tracking-wider font-bold">Rapor</span>
+        </button>
 
-        <button onclick="window.switchTabOrtu('amalan')" class="flex flex-col items-center justify-center w-full h-full gap-0.5 btn-active ${state.activeTabOrtu === 'amalan' ? 'text-purple-700 font-bold' : 'text-purple-700/80'}"><i class="fas fa-clipboard-check text-sm"></i><span class="text-[8px] uppercase tracking-wider font-semibold">Mutaba'ah</span></button>
+        <button onclick="window.switchTabOrtu('amalan')" class="flex flex-col items-center justify-center w-full h-full gap-0.5 btn-active transition-all duration-300 transform ${state.activeTabOrtu === 'amalan' ? 'scale-110 text-purple-700 font-bold drop-shadow-sm' : 'scale-90 text-purple-700/60 hover:text-purple-700'}" title="Mutaba'ah">
+            <i class="fas fa-clipboard-check text-base"></i>
+            <span class="text-[8px] uppercase tracking-wider font-bold">Mutaba'ah</span>
+        </button>
+        
+        <button onclick="window.switchTabOrtu('setoran-online')" class="flex flex-col items-center justify-center w-full h-full gap-0.5 btn-active transition-all duration-300 transform ${state.activeTabOrtu === 'setoran-online' ? 'scale-110 text-blue-700 font-bold drop-shadow-sm' : 'scale-90 text-blue-700/60 hover:text-blue-700'}" title="Online">
+            <i class="fas fa-microphone-alt text-base"></i>
+            <span class="text-[8px] uppercase tracking-wider font-bold">Online</span>
+        </button>
     </nav>
   `;
 };
@@ -1206,7 +1493,7 @@ window.renderOrtuBeranda = function() {
             audioHtml = `
               <div class="mt-3 p-3 bg-white rounded-2xl border border-blue-100 shadow-2xs">
                 <div class="flex items-center justify-between mb-1.5">
-                    <span class="text-[10px] font-bold text-blue-900 flex items-center gap-1.5"><i class="fas fa-headphones-alt text-blue-600"></i> Rekaman Talqin Ustadz</span>
+                    <span class="text-[10px] font-bold text-blue-900 flex items-center gap-1.5"><i class="fas fa-headphones-alt text-blue-600"></i> Rekaman Talqin </span>
                 </div>
                 <div class="w-full overflow-hidden rounded-xl bg-gray-50 border border-gray-100" style="height: 44px;">
                     <iframe src="https://drive.google.com/file/d/${fileId}/preview" width="100%" height="80" style="border:none; margin-top: -18px; pointer-events: auto;" scrolling="no"></iframe>
@@ -1263,6 +1550,127 @@ window.renderOrtuBeranda = function() {
   `;
 };
 
+window.renderOrtuSetoranOnline = function() {
+  const optSurah = DAFTAR_SURAH.map((s, i) => `<option value="${s}">${i+1}. ${s}</option>`).join('');
+  
+  let myOnline = (state.setoranOnline || []).map(s => {
+      let isBelum = (s.Status || s.status || '') === 'Belum dinilai';
+      let badgeClass = isBelum ? 'bg-gray-100 text-gray-500' : 'bg-emerald-50 text-emerald-600 border border-emerald-200';
+      let predikat = s.Predikat || s.predikat || '-';
+      let feedback = s.Feedback || s.feedback || '-';
+      let namaUstadz = s.Nama_Ustadz || s.nama_ustadz || '-';
+      
+      let audioUrl = s.Audio_Url || s.audio_url || '-';
+      let audioHtml = '';
+      if (audioUrl && audioUrl !== '-' && String(audioUrl).startsWith('http')) {
+          let fileIdMatch = String(audioUrl).match(/[-\w]{25,}/);
+          if (fileIdMatch) {
+              let fileId = fileIdMatch[0];
+              audioHtml = `
+                <div class="mt-2 w-full overflow-hidden rounded-xl bg-gray-50 border border-gray-100" style="height: 44px;">
+                    <iframe src="https://drive.google.com/file/d/${fileId}/preview" width="100%" height="80" style="border:none; margin-top: -18px; pointer-events: auto;" scrolling="no"></iframe>
+                </div>
+              `;
+          }
+      }
+
+      return `
+      <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 mb-3">
+          <div class="flex justify-between items-start mb-2">
+              <h4 class="font-bold text-sm text-blue-900">${s.Surah || s.surah} <span class="text-xs text-gray-500 font-medium">(Ayat: ${s.Ayat || s.ayat})</span></h4>
+              <span class="px-2 py-1 rounded-lg text-[10px] font-bold ${badgeClass}">${s.Status || s.status}</span>
+          </div>
+          <p class="text-[10px] text-gray-400 mb-2"><i class="far fa-calendar-alt"></i> ${new Date(s.Tanggal || s.tanggal).toLocaleDateString('id-ID')}</p>
+          ${audioHtml}
+          ${s.Catatan_Ortu && s.Catatan_Ortu !== '-' ? `<p class="text-[10px] text-gray-500 italic mt-2">" ${s.Catatan_Ortu} "</p>` : ''}
+          ${!isBelum ? `
+          <div class="mt-3 bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100 text-xs">
+              <div class="flex justify-between items-center mb-1"><span class="font-bold text-emerald-900">Predikat:</span><span class="font-black text-emerald-600">${predikat}</span></div>
+              <p class="text-[10px] text-gray-600 mt-1"><b>Catatan:</b> ${feedback}</p>
+              <p class="text-[9px] text-gray-400 mt-1.5 text-right">- ${namaUstadz}</p>
+          </div>` : ''}
+      </div>`;
+  }).join('');
+
+  return `
+  <div class="mb-5">
+    <h3 class="text-sm font-bold text-blue-900 mb-3"><i class="fas fa-paper-plane text-blue-600 mr-1.5"></i> Kirim Setoran Online</h3>
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 mb-8">
+      <form onsubmit="window.handleKirimSetoranOnline(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Pilih Surah</label>
+          <select id="onl-surah" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-blue-500 appearance-none" required>
+            <option value="">-- Pilih Surah --</option>${optSurah}
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-semibold text-gray-600 mb-1 ml-1">Keterangan Ayat</label>
+          <input type="text" id="onl-ayat" class="w-full bg-white border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-blue-500" placeholder="Contoh: 1-10" required>
+        </div>
+        
+        <!-- Audio Recording -->
+        <div class="bg-blue-50/40 p-4 rounded-2xl border border-blue-100">
+          <label class="block text-xs font-bold text-blue-900 mb-3"><i class="fas fa-microphone text-blue-600 mr-1.5"></i> Rekam Suara</label>
+          <div class="flex flex-col gap-2 items-center w-full">
+            <div class="flex w-full gap-2">
+              <button type="button" id="btn-start-record" onclick="window.startRecording()" class="flex-1 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"><i class="fas fa-microphone"></i> Mulai Rekam</button>
+              <button type="button" id="btn-stop-record" onclick="window.stopRecording()" class="hidden flex-1 bg-red-500 border border-red-600 text-white hover:bg-red-600 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"><i class="fas fa-stop-circle"></i> Hentikan</button>
+            </div>
+            <div id="recording-indicator" class="hidden text-[10px] text-red-500 font-bold animate-pulse mt-1">Sedang merekam... <span id="record-time">00:00</span></div>
+            <audio id="audio-preview" controls class="w-full h-9 mt-2 hidden rounded-lg"></audio>
+            <button type="button" id="btn-hapus-rekaman" onclick="window.hapusRekaman()" class="text-[10px] text-gray-500 hover:text-red-500 underline hidden mt-1">Hapus Rekaman</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Catatan (Opsional)</label>
+          <textarea id="onl-catatan" rows="2" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-blue-500" placeholder="Catatan untuk ustadz..."></textarea>
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-2xl shadow-md transition-all text-sm">Kirim Setoran</button>
+      </form>
+    </div>
+
+    <h3 class="text-sm font-bold text-gray-800 mb-3"><i class="fas fa-history text-blue-600 mr-1.5"></i> Riwayat Setoran Online</h3>
+    <div>${myOnline || '<div class="text-center p-8 bg-white border border-dashed rounded-3xl text-gray-400 text-xs">Belum ada riwayat setoran online.</div>'}</div>
+  </div>`;
+};
+
+window.handleKirimSetoranOnline = async function(e) {
+  e.preventDefault();
+  if (!audioBase64) {
+      return Swal.fire('Peringatan', 'Harap rekam setoran terlebih dahulu sebelum mengirim!', 'warning');
+  }
+  
+  Swal.fire({ title: 'Mengirim Setoran...', html: 'Mengunggah audio...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  
+  const santriName = state.santri_info ? (state.santri_info.nama_santri || state.santri_info.NAMA_SANTRI) : state.user.nama_lengkap;
+  const audioPayload = { base64: audioBase64, namaFile: 'Setoran_Onl_' + santriName.replace(/\s+/g, '_') + '_' + new Date().getTime() };
+  
+  const resAudio = await window.apiCall('uploadAudioTalqin', audioPayload);
+  if (!resAudio.success) return Swal.fire('Gagal', 'Gagal mengunggah audio. Silakan coba lagi.', 'error');
+
+  const payload = {
+      tanggal: new Date().toISOString().split('T')[0],
+      id_santri: state.user.id_santri || state.user.ID_Santri || '',
+      nama_santri: santriName,
+      surah: document.getElementById('onl-surah').value,
+      ayat: "'" + document.getElementById('onl-ayat').value,
+      catatan: document.getElementById('onl-catatan').value || '-',
+      audio_url: resAudio.url
+  };
+
+  Swal.update({ html: 'Menyimpan laporan...' });
+  const res = await window.apiCall('addSetoranOnline', payload);
+  if (res.success) {
+      window.playSuccessSound();
+      Swal.fire('Berhasil', res.message, 'success');
+      window.hapusRekaman();
+      window.loadDashboardData();
+  } else {
+      Swal.fire('Gagal', res.message, 'error');
+  }
+};
+
 window.renderOrtuNilaiSurat = function() {
   let info = state.santri_info || {};
   let namaAnak = String(info.nama_santri || info.nama || info.NAMA_SANTRI || info.NAMA || state.user.nama_lengkap || '').trim().toLowerCase();
@@ -1317,56 +1725,67 @@ window.renderOrtuNilaiSurat = function() {
 };
 
 window.renderOrtuMutabaah = function() {
-  let cards = (state.mutabaah || []).map(m => `
-    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-4 mb-4">
-      <span class="text-xs font-bold text-gray-600 block mb-3 border-b border-gray-100 pb-2">
-        <i class="far fa-calendar-check text-purple-600 mr-1"></i> ${new Date(m.tanggal).toLocaleDateString('id-ID')}
-      </span>
-      
-      <p class="text-[10px] font-bold text-purple-900 uppercase mb-1.5 tracking-wider">1. Salat Wajib</p>
-      <div class="grid grid-cols-5 gap-1 text-center mb-3 bg-purple-50/40 p-2 rounded-2xl border border-purple-100">
-        ${['subuh','dzuhur','ashar','maghrib','isya'].map(w => `
-          <div class="flex flex-col items-center">
-            <div class="w-6 h-6 rounded-full flex items-center justify-center ${m[w]==='Ya'?'bg-emerald-100 text-emerald-700':'bg-red-50 text-red-400'}">
-              <i class="fas fa-${m[w]==='Ya'?'check':'times'} text-[10px]"></i>
+  let cards = (state.mutabaah || []).map(m => {
+    // Kita paksa tampilkan tombol edit untuk semua data yang muncul di riwayat hari ini
+    const rawDate = m.tanggal || m.Tanggal || m.TANGGAL || m[1] || '';
+
+    return `
+      <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-4 mb-4">
+        <!-- HEADER KARTU: TANGGAL DAN TOMBOL EDIT -->
+        <div class="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
+          <span class="text-xs font-bold text-gray-600">
+            <i class="far fa-calendar-check text-purple-600 mr-1"></i> ${rawDate ? new Date(rawDate).toLocaleDateString('id-ID') : '14/9/2026'}
+          </span>
+          <button type="button" onclick='window.openEditMutabaah(${JSON.stringify(m)})' class="bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+             <i class="fas fa-edit"></i> Edit Laporan
+          </button>
+        </div>
+        
+        <p class="text-[10px] font-bold text-purple-900 uppercase mb-1.5 tracking-wider">1. Salat Wajib</p>
+        <div class="grid grid-cols-5 gap-1 text-center mb-3 bg-purple-50/40 p-2 rounded-2xl border border-purple-100">
+          ${['subuh','dzuhur','ashar','maghrib','isya'].map(w => `
+            <div class="flex flex-col items-center">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center ${m[w]==='Ya'?'bg-emerald-100 text-emerald-700':'bg-red-50 text-red-400'}">
+                <i class="fas fa-${m[w]==='Ya'?'check':'times'} text-[10px]"></i>
+              </div>
+              <span class="text-[8px] mt-1 capitalize font-bold text-gray-600">${w}</span>
             </div>
-            <span class="text-[8px] mt-1 capitalize font-bold text-gray-600">${w}</span>
-          </div>
-        `).join('')}
-      </div>
+          `).join('')}
+        </div>
 
-      <p class="text-[10px] font-bold text-blue-900 uppercase mb-1.5 tracking-wider">2. Kebiasaan Baik Murid SDIT Darussakinah</p>
-      <div class="grid grid-cols-2 gap-1.5 mb-3 text-[10px]">
-        ${[
-          {key: 'merapikan_tempat_tidur', label: 'Rapikan Tempat Tidur'}, {key: 'doa_bangun_tidur', label: 'Doa Bangun Tidur'}, {key: 'mandi_pagi', label: 'Mandi Pagi'}, {key: 'sikat_gigi', label: 'Menyikat Gigi'}, {key: 'berpamitan', label: 'Berpamitan ke Ortu'}, {key: 'dzikir_pagi', label: 'Dzikir Pagi'}, {key: 'dhuha', label: 'Salat Dhuha'}, {key: 'akhlak_adab', label: 'Akhlak & Adab'}, {key: 'menghormati_tua', label: 'Adab ke Lebih Tua'}, {key: 'menyayangi_muda', label: 'Sayang ke Lebih Muda'}, {key: 'jaga_lisan', label: 'Menjaga Lisan'}, {key: 'tidur_tepat_waktu', label: 'Tidur Tepat Waktu'}
-        ].map(item => `
-          <div class="flex items-center gap-1.5 bg-blue-50/40 px-2.5 py-1.5 rounded-xl border border-blue-100">
-            <i class="fas fa-${m[item.key]==='Ya' ? 'check-circle text-emerald-500' : 'times-circle text-red-300'} text-xs"></i>
-            <span class="text-gray-700 font-medium truncate">${item.label}</span>
-          </div>
-        `).join('')}
-      </div>
-
-      <p class="text-[10px] font-bold text-emerald-900 uppercase mb-1.5 tracking-wider">3. Murojaah Al-Qur'an</p>
-      <div class="grid grid-cols-3 gap-1.5 mb-3 text-[10px]">
-        ${[
-          {key: 'murojaah_ashar', label: 'Ba\'da Ashar'}, {key: 'murojaah_maghrib', label: 'Ba\'da Maghrib'}, {key: 'murojaah_isya', label: 'Ba\'da Isya'}
-        ].map(item => `
-          <div class="flex flex-col items-center bg-emerald-50/50 p-2 rounded-xl border border-emerald-100 text-center">
-            <div class="w-5 h-5 rounded-full flex items-center justify-center ${m[item.key]==='Ya'?'text-emerald-600':'text-red-300'} mb-0.5">
-              <i class="fas fa-${m[item.key]==='Ya'?'check-circle':'times-circle'} text-xs"></i>
+        <p class="text-[10px] font-bold text-blue-900 uppercase mb-1.5 tracking-wider">2. Kebiasaan Baik Murid SDIT Darussakinah</p>
+        <div class="grid grid-cols-2 gap-1.5 mb-3 text-[10px]">
+          ${[
+            {key: 'merapikan_tempat_tidur', label: 'Rapikan Tempat Tidur'}, {key: 'doa_bangun_tidur', label: 'Doa Bangun Tidur'}, {key: 'mandi_pagi', label: 'Mandi Pagi'}, {key: 'sikat_gigi', label: 'Menyikat Gigi'}, {key: 'berpamitan', label: 'Berpamitan ke Ortu'}, {key: 'dzikir_pagi', label: 'Dzikir Pagi'}, {key: 'dhuha', label: 'Salat Dhuha'}, {key: 'akhlak_adab', label: 'Akhlak & Adab'}, {key: 'menghormati_tua', label: 'Adab ke Lebih Tua'}, {key: 'menyayangi_muda', label: 'Sayang ke Lebih Muda'}, {key: 'jaga_lisan', label: 'Menjaga Lisan'}, {key: 'tidur_tepat_waktu', label: 'Tidur Tepat Waktu'}
+          ].map(item => `
+            <div class="flex items-center gap-1.5 bg-blue-50/40 px-2.5 py-1.5 rounded-xl border border-blue-100">
+              <i class="fas fa-${m[item.key]==='Ya' ? 'check-circle text-emerald-500' : 'times-circle text-red-300'} text-xs"></i>
+              <span class="text-gray-700 font-medium truncate">${item.label}</span>
             </div>
-            <span class="text-gray-700 font-medium text-[9px]">${item.label}</span>
-          </div>
-        `).join('')}
-      </div>
+          `).join('')}
+        </div>
 
-      <div class="text-[11px] text-gray-600 italic bg-gray-50 p-3 rounded-2xl border border-gray-100">
-        <span class="block text-[9px] font-bold text-gray-400 uppercase mb-0.5">Catatan Orang Tua</span>
-        "${m.catatan || m.CATATAN || '-'}"
+        <p class="text-[10px] font-bold text-emerald-900 uppercase mb-1.5 tracking-wider">3. Murojaah Al-Qur'an</p>
+        <div class="grid grid-cols-3 gap-1.5 mb-3 text-[10px]">
+          ${[
+            {key: 'murojaah_ashar', label: 'Ba\'da Ashar'}, {key: 'murojaah_maghrib', label: 'Ba\'da Maghrib'}, {key: 'murojaah_isya', label: 'Ba\'da Isya'}
+          ].map(item => `
+            <div class="flex flex-col items-center bg-emerald-50/50 p-2 rounded-xl border border-emerald-100 text-center">
+              <div class="w-5 h-5 rounded-full flex items-center justify-center ${m[item.key]==='Ya'?'text-emerald-600':'text-red-300'} mb-0.5">
+                <i class="fas fa-${m[item.key]==='Ya'?'check-circle':'times-circle'} text-xs"></i>
+              </div>
+              <span class="text-gray-700 font-medium text-[9px]">${item.label}</span>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="text-[11px] text-gray-600 italic bg-gray-50 p-3 rounded-2xl border border-gray-100">
+          <span class="block text-[9px] font-bold text-gray-400 uppercase mb-0.5">Catatan Orang Tua</span>
+          "${m.catatan || m.CATATAN || '-'}"
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   return `
     <div class="mb-5">
@@ -1375,7 +1794,7 @@ window.renderOrtuMutabaah = function() {
         <form onsubmit="window.submitMutabaah(event)" class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Tanggal</label>
-            <input type="date" id="mut-tgl" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-xs outline-none focus:border-purple-500 font-medium" value="${new Date().toISOString().split('T')[0]}" required>
+            <input type="date" id="mut-tgl" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-xs outline-none focus:border-purple-500 font-medium" value="${new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0')}" required>
           </div>
 
           <div>
@@ -1430,7 +1849,150 @@ window.renderOrtuMutabaah = function() {
       <h3 class="text-sm font-bold text-gray-800 mb-3"><i class="fas fa-history text-purple-600 mr-2"></i> Riwayat Amalan</h3>
       <div>${cards||'<div class="text-center p-8 bg-white border border-dashed rounded-3xl text-gray-400 text-xs">Belum ada catatan amalan.</div>'}</div>
     </div>
+
+    <!-- MODAL EDIT MUTABAAH -->
+    <div id="modal-edit-mutabaah" class="app-modal">
+      <div class="bg-white rounded-3xl w-full max-w-md p-6 h-[85vh] overflow-y-auto shadow-2xl">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+          <h3 class="font-bold text-purple-950 text-sm"><i class="fas fa-edit text-purple-600 mr-1.5"></i> Edit Mutaba'ah Hari Ini</h3>
+          <button type="button" onclick="window.closeModal('modal-edit-mutabaah')" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+        </div>
+        <form onsubmit="window.handleUpdateMutabaah(event)" class="space-y-4">
+          <input type="hidden" id="edit-mut-id">
+          <input type="hidden" id="edit-mut-tgl">
+          
+          <div>
+            <label class="block text-xs font-semibold text-purple-900 mb-2">1. Salat Wajib</label>
+            <div class="grid grid-cols-5 gap-1 text-sm">
+              ${['subuh','dzuhur','ashar','maghrib','isya'].map(w=>`
+                <label class="flex flex-col items-center justify-center bg-purple-50/30 p-2 rounded-xl border border-purple-100 font-medium text-gray-700 text-[10px] cursor-pointer">
+                  <input type="checkbox" id="edit-mut-${w}" class="w-3.5 h-3.5 text-purple-700 rounded mb-1">
+                  <span class="capitalize">${w}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-blue-900 mb-2">2. Kebiasaan Baik</label>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              ${[
+                {id: 'merapikan_tempat_tidur', label: 'Rapikan Tempat Tidur'}, {id: 'doa_bangun_tidur', label: 'Doa Bangun Tidur'}, {id: 'mandi_pagi', label: 'Mandi Pagi'}, {id: 'sikat_gigi', label: 'Menyikat Gigi'}, {id: 'berpamitan', label: 'Berpamitan ke Ortu'}, {id: 'dzikir_pagi', label: 'Dzikir Pagi'}, {id: 'dhuha', label: 'Salat Dhuha'}, {id: 'akhlak_adab', label: 'Akhlak & Adab'}, {id: 'menghormati_tua', label: 'Adab ke Lebih Tua'}, {id: 'menyayangi_muda', label: 'Sayang ke Lebih Muda'}, {id: 'jaga_lisan', label: 'Menjaga Lisan'}, {id: 'tidur_tepat_waktu', label: 'Tidur Tepat Waktu'}
+              ].map(item => `
+                <label class="flex items-center space-x-2 bg-blue-50/30 p-2.5 rounded-xl border border-blue-100 font-medium text-gray-700 cursor-pointer">
+                  <input type="checkbox" id="edit-mut-${item.id}" class="w-4 h-4 text-blue-600 rounded flex-shrink-0">
+                  <span class="leading-tight text-[10px]">${item.label}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-emerald-900 mb-2">3. Murojaah Al-Qur'an</label>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              ${[
+                {id: 'murojaah_ashar', label: "Ba'da Ashar"}, {id: 'murojaah_maghrib', label: "Ba'da Maghrib"}, {id: 'murojaah_isya', label: "Ba'da Isya"}
+              ].map(item => `
+                <label class="flex items-center space-x-1.5 bg-emerald-50/40 p-2.5 rounded-xl border border-emerald-100 font-medium text-gray-700 cursor-pointer justify-center text-center">
+                  <input type="checkbox" id="edit-mut-${item.id}" class="w-4 h-4 text-emerald-600 rounded flex-shrink-0">
+                  <span class="leading-tight text-[10px]">${item.label}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Catatan Orang Tua</label>
+            <textarea id="edit-mut-catatan" rows="2" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-2xl p-3.5 text-xs outline-none focus:border-purple-500 font-medium"></textarea>
+          </div>
+
+          <button type="submit" class="w-full bg-purple-700 hover:bg-purple-800 text-white font-semibold py-4 rounded-2xl shadow-md transition-all text-xs">Simpan Perubahan</button>
+        </form>
+      </div>
+    </div>
   `;
+};
+
+// Fungsi untuk membuka modal edit dan mengisi datanya ke form
+// 1. FUNGSI UNTUK MEMBUKA MODAL EDIT
+window.openEditMutabaah = function(item) {
+  document.getElementById('edit-mut-id').value = item.ID_Mutabaah || item.id_Mutabaah || item[0] || '';
+  
+  // Perbaiki pembacaan tanggal lokal di frontend
+  let rawDate = item.tanggal || item.Tanggal || item.TANGGAL || '';
+  if (rawDate) {
+    let d = new Date(rawDate);
+    if (!isNaN(d.getTime())) {
+      // Paksa ambil tanggal lokal komputer/HP (WIB)
+      let year = d.getFullYear();
+      let month = String(d.getMonth() + 1).padStart(2, '0');
+      let day = String(d.getDate()).padStart(2, '0');
+      document.getElementById('edit-mut-tgl').value = `${year}-${month}-${day}`;
+    } else {
+      document.getElementById('edit-mut-tgl').value = String(rawDate).split('T')[0];
+    }
+  }
+
+  document.getElementById('edit-mut-catatan').value = item.catatan || item.CATATAN || '';
+
+  const fields = [
+    'subuh', 'dzuhur', 'ashar', 'maghrib', 'isya',
+    'merapikan_tempat_tidur', 'doa_bangun_tidur', 'mandi_pagi', 'sikat_gigi',
+    'berpamitan', 'dzikir_pagi', 'dhuha', 'akhlak_adab', 'menghormati_tua',
+    'menyayangi_muda', 'jaga_lisan', 'tidur_tepat_waktu',
+    'murojaah_ashar', 'murojaah_maghrib', 'murojaah_isya'
+  ];
+
+  fields.forEach(f => {
+    let el = document.getElementById('edit-mut-' + f);
+    if (el) {
+      el.checked = (item[f] === 'Ya');
+    }
+  });
+
+  const modal = document.getElementById('modal-edit-mutabaah');
+  if (modal) {
+    modal.classList.add('active'); // atau modal.style.display = 'flex'; (sesuaikan dengan CSS Anda)
+  }
+};
+
+// 2. FUNGSI UNTUK MENYIMPAN PERUBAHAN
+window.handleUpdateMutabaah = async function(e) {
+  e.preventDefault();
+
+  const fields = [
+    'subuh', 'dzuhur', 'ashar', 'maghrib', 'isya',
+    'merapikan_tempat_tidur', 'doa_bangun_tidur', 'mandi_pagi', 'sikat_gigi',
+    'berpamitan', 'dzikir_pagi', 'dhuha', 'akhlak_adab', 'menghormati_tua',
+    'menyayangi_muda', 'jaga_lisan', 'tidur_tepat_waktu',
+    'murojaah_ashar', 'murojaah_maghrib', 'murojaah_isya'
+  ];
+
+  let payload = {
+    id_mutabaah: document.getElementById('edit-mut-id').value,
+    
+    // 🔥 KUNCI SOLUSINYA DI SINI: KITA TIDAK MEMASUKKAN TANGGAL KE DALAM PAYLOAD
+    // Sehingga sistem backend tidak akan menyentuh/mengubah tanggal sama sekali di database!
+    
+    catatan: document.getElementById('edit-mut-catatan').value || '-'
+  };
+
+  fields.forEach(f => {
+    let el = document.getElementById('edit-mut-' + f);
+    payload[f] = el && el.checked ? 'Ya' : 'Tidak';
+  });
+
+  Swal.fire({ title: 'Menyimpan Perubahan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+  const res = await window.apiCall('updateMutabaah', payload);
+  if (res.success) {
+    window.playSuccessSound(); // Jika Anda pakai sound
+    Swal.fire('Berhasil', res.message, 'success');
+    window.closeModal('modal-edit-mutabaah');
+    window.loadDashboardData(); // Muat ulang layar
+  } else {
+    Swal.fire('Gagal', res.message, 'error');
+  }
 };
 
 window.handleFilterMutabaahKelas = function(val) {
@@ -1575,48 +2137,40 @@ window.renderMutabaahUstadz = function() {
   `;
 };
 
-window.submitMutabaah = async function(e) { 
-  e.preventDefault(); 
+window.submitMutabaah = async function(e) {
+  e.preventDefault();
+  
   const targetIdSantri = state.user.id_santri || state.user.ID_Santri || state.user.ID_SANTRI || '';
   
-  const payload = { 
-    tanggal: document.getElementById('mut-tgl').value, 
-    id_santri: targetIdSantri, 
-    subuh: document.getElementById('mut-subuh').checked ? 'Ya' : 'Tidak', 
-    dzuhur: document.getElementById('mut-dzuhur').checked ? 'Ya' : 'Tidak', 
-    ashar: document.getElementById('mut-ashar').checked ? 'Ya' : 'Tidak', 
-    maghrib: document.getElementById('mut-maghrib').checked ? 'Ya' : 'Tidak', 
-    isya: document.getElementById('mut-isya').checked ? 'Ya' : 'Tidak', 
-    
-    merapikan_tempat_tidur: document.getElementById('mut-merapikan_tempat_tidur').checked ? 'Ya' : 'Tidak',
-    doa_bangun_tidur: document.getElementById('mut-doa_bangun_tidur').checked ? 'Ya' : 'Tidak',
-    mandi_pagi: document.getElementById('mut-mandi_pagi').checked ? 'Ya' : 'Tidak',
-    sikat_gigi: document.getElementById('mut-sikat_gigi').checked ? 'Ya' : 'Tidak',
-    berpamitan: document.getElementById('mut-berpamitan').checked ? 'Ya' : 'Tidak',
-    dzikir_pagi: document.getElementById('mut-dzikir_pagi').checked ? 'Ya' : 'Tidak',
-    dhuha: document.getElementById('mut-dhuha').checked ? 'Ya' : 'Tidak',
-    akhlak_adab: document.getElementById('mut-akhlak_adab').checked ? 'Ya' : 'Tidak',
-    menghormati_tua: document.getElementById('mut-menghormati_tua').checked ? 'Ya' : 'Tidak',
-    menyayangi_muda: document.getElementById('mut-menyayangi_muda').checked ? 'Ya' : 'Tidak',
-    jaga_lisan: document.getElementById('mut-jaga_lisan').checked ? 'Ya' : 'Tidak',
-    tidur_tepat_waktu: document.getElementById('mut-tidur_tepat_waktu').checked ? 'Ya' : 'Tidak',
-    
-    murojaah_ashar: document.getElementById('mut-murojaah_ashar').checked ? 'Ya' : 'Tidak',
-    murojaah_maghrib: document.getElementById('mut-murojaah_maghrib').checked ? 'Ya' : 'Tidak',
-    murojaah_isya: document.getElementById('mut-murojaah_isya').checked ? 'Ya' : 'Tidak',
-    
-    catatan: document.getElementById('mut-catatan').value 
-  }; 
+  const fields = [
+    'subuh', 'dzuhur', 'ashar', 'maghrib', 'isya',
+    'merapikan_tempat_tidur', 'doa_bangun_tidur', 'mandi_pagi', 'sikat_gigi', 
+    'berpamitan', 'dzikir_pagi', 'dhuha', 'akhlak_adab', 'menghormati_tua', 
+    'menyayangi_muda', 'jaga_lisan', 'tidur_tepat_waktu',
+    'murojaah_ashar', 'murojaah_maghrib', 'murojaah_isya'
+  ];
 
-  Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }); 
-  const res = await window.apiCall('addMutabaah', payload); 
-  if(res.success) { 
+  let payload = {
+    tanggal: document.getElementById('mut-tgl').value,
+    id_santri: targetIdSantri,
+    catatan: document.getElementById('mut-catatan').value || '-'
+  };
+
+  fields.forEach(f => {
+    let el = document.getElementById('mut-' + f);
+    payload[f] = el && el.checked ? 'Ya' : 'Tidak';
+  });
+
+  Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+  const res = await window.apiCall('addMutabaah', payload);
+  if (res.success) {
     window.playSuccessSound();
-    Swal.fire('Berhasil', res.message, 'success'); 
-    window.loadDashboardData(); 
-  } else { 
-    Swal.fire('Gagal', res.message, 'error'); 
-  } 
+    Swal.fire('Berhasil', res.message, 'success');
+    window.loadDashboardData(); // Memuat ulang data riwayat terbaru
+  } else {
+    Swal.fire('Gagal', res.message, 'error');
+  }
 };
 
 // ==========================================
@@ -1735,17 +2289,20 @@ window.renderDataLoginMurid = function() {
           
           let studentCards = studentsInClass.map(s => {
               let nama = s.nama_santri || s.nama || s.NAMA_SANTRI || s.Nama || 'Tanpa Nama';
-              let generatedUsername = nama.toLowerCase().replace(/\s+/g, '');
-              let generatedPassword = 'sditds';
+              let uname = s.username_ortu || s.username || s.Username || s['username_ortu'] || nama.toLowerCase().replace(/\s+/g, '');
+              let pass = s.password_ortu || s.password || s.Password || s['password_ortu'] || 'sditds';
               
-              let uname = s.username || s.USERNAME || s.Username || s['Username'] || s['username'] || generatedUsername;
-              let pass = s.password || s.PASSWORD || s.Password || s['Password'] || s['password'] || generatedPassword;
+              // Escape quotes agar aman saat parsing JSON
+              let cleanObj = JSON.stringify(s).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
               return `
                 <div class="bg-[#F4EFE6] p-3 rounded-2xl border border-gray-200 mb-3 murid-login-card shadow-sm" data-nama="${nama.toLowerCase()}">
-                    <div class="flex items-center mb-2">
-                        <div class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex justify-center items-center mr-2 shadow-sm shrink-0 border border-indigo-200"><i class="fas fa-user-graduate text-[10px]"></i></div> 
-                        <span class="font-bold text-xs text-gray-800 truncate leading-tight">${nama}</span>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center overflow-hidden">
+                           <div class="w-7 h-7 rounded-full bg-indigo-100 text-indigo-600 flex justify-center items-center mr-2 shadow-sm shrink-0 border border-indigo-200"><i class="fas fa-user-graduate text-[10px]"></i></div> 
+                           <span class="font-bold text-xs text-gray-800 truncate leading-tight">${nama}</span>
+                        </div>
+                        <button onclick="window.bukaModalEditMurid('${cleanObj}')" class="w-7 h-7 shrink-0 bg-white rounded-lg text-indigo-500 border border-gray-200 hover:bg-indigo-50 hover:border-indigo-300 flex justify-center items-center shadow-sm transition-all" title="Edit Akun"><i class="fas fa-edit text-[10px]"></i></button>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
@@ -1753,18 +2310,14 @@ window.renderDataLoginMurid = function() {
                                 <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Username</p>
                                 <p class="text-[10px] font-bold text-gray-800 truncate">${uname}</p>
                             </div>
-                            <button onclick="window.copyCredential('${uname}')" class="w-7 h-7 shrink-0 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-500 hover:text-white flex items-center justify-center transition-all" title="Salin Username">
-                                <i class="far fa-copy text-[10px]"></i>
-                            </button>
+                            <button onclick="window.copyCredential('${uname}')" class="w-7 h-7 shrink-0 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-500 hover:text-white flex items-center justify-center transition-all" title="Salin"><i class="far fa-copy text-[10px]"></i></button>
                         </div>
                         <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-gray-100 shadow-sm">
                             <div class="overflow-hidden">
                                 <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Password</p>
                                 <p class="text-[10px] font-bold text-gray-800 truncate">${pass}</p>
                             </div>
-                            <button onclick="window.copyCredential('${pass}')" class="w-7 h-7 shrink-0 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-500 hover:text-white flex items-center justify-center transition-all" title="Salin Password">
-                                <i class="far fa-copy text-[10px]"></i>
-                            </button>
+                            <button onclick="window.copyCredential('${pass}')" class="w-7 h-7 shrink-0 rounded-lg bg-indigo-50 text-indigo-500 hover:bg-indigo-500 hover:text-white flex items-center justify-center transition-all" title="Salin"><i class="far fa-copy text-[10px]"></i></button>
                         </div>
                     </div>
                 </div>
@@ -1774,13 +2327,10 @@ window.renderDataLoginMurid = function() {
           return `
             <div class="bg-white p-4 rounded-3xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 mb-5 class-group-card">
                 <h3 class="font-extrabold text-sm text-indigo-900 mb-3 flex items-center gap-2 border-b border-gray-50 pb-3">
-                    <div class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center"><i class="fas fa-chalkboard text-xs"></i></div>
-                    Kelas ${kelas}
+                    <div class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center"><i class="fas fa-chalkboard text-xs"></i></div> Kelas ${kelas}
                     <span class="ml-auto text-[9px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg border border-indigo-100 font-bold">${studentsInClass.length} Murid</span>
                 </h3>
-                <div class="student-list">
-                    ${studentCards}
-                </div>
+                <div class="student-list">${studentCards}</div>
             </div>
           `;
       }).join('');
@@ -1790,17 +2340,14 @@ window.renderDataLoginMurid = function() {
     <div class="px-5 pt-6">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-lg font-bold text-[#044343] leading-tight">Data Akun Murid</h2>
-        <button onclick="window.switchTab('beranda')" class="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:text-[#044343] shadow-sm transition-colors"><i class="fas fa-arrow-left text-xs"></i></button>
+        <div class="flex gap-2">
+          <button onclick="window.bukaModalUploadExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 shadow-sm transition-all"><i class="fas fa-file-excel"></i> Upload Excel</button>
+          <button onclick="window.bukaModalTambahMurid()" class="bg-[#044343] hover:bg-[#023131] text-white font-bold px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 shadow-sm transition-all"><i class="fas fa-user-plus"></i> Tambah</button>
+          <button onclick="window.switchTab('beranda')" class="w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:text-[#044343] shadow-sm transition-colors"><i class="fas fa-arrow-left text-xs"></i></button>
+        </div>
       </div>
-      
-      <div class="relative mb-5">
-        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i>
-        <input type="text" onkeyup="window.searchAkunMurid(this.value)" placeholder="Cari nama murid..." class="w-full bg-white border border-gray-100 rounded-2xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700">
-      </div>
-      
-      <div class="space-y-2" id="akun-murid-container">
-        ${contentHtml}
-      </div>
+      <div class="relative mb-5"><i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i><input type="text" onkeyup="window.searchAkunMurid(this.value)" placeholder="Cari nama murid..." class="w-full bg-white border border-gray-100 rounded-2xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#044343] shadow-sm text-gray-700"></div>
+      <div class="space-y-2" id="akun-murid-container">${contentHtml}</div>
     </div>
   `;
 };
@@ -2000,7 +2547,7 @@ window.renderInputSetoran = function() {
 
           <!-- MODUL REKAM AUDIO -->
           <div class="bg-blue-50/40 p-4 rounded-2xl border border-blue-100">
-            <label class="block text-xs font-bold text-blue-900 mb-3"><i class="fas fa-microphone text-blue-600 mr-1.5"></i> Rekam Talqin (Opsional)</label>
+            <label class="block text-xs font-bold text-blue-900 mb-3"><i class="fas fa-microphone text-blue-600 mr-1.5"></i> Talqin (Opsional)</label>
             <div class="flex flex-col gap-2 items-center w-full">
               <div class="flex w-full gap-2">
                 <button type="button" id="btn-start-record" onclick="window.startRecording()" class="flex-1 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"><i class="fas fa-microphone"></i> Mulai Rekam</button>
@@ -2462,7 +3009,235 @@ window.handleUpdateProgress = async function(e) {
     Swal.fire('Gagal', res.message, 'error');
   }
 };
+// ==========================================
+// FITUR MODAL TAMBAH & EDIT MURID
+// ==========================================
+window.bukaModalTambahMurid = function() {
+  let listKelas = [...new Set((state.kelas || []).map(k => k.nama_kelas || k.NAMA_KELAS).filter(Boolean))].sort();
+  let listUstadz = (state.ustadz || []).map(u => u.nama_lengkap || u.NAMA_LENGKAP).filter(Boolean).sort();
 
+  let modalHTML = `
+    <div id="modal-tambah-murid" class="app-modal active" style="display: flex;">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 h-[85vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+          <h3 class="font-bold text-[#044343]"><i class="fas fa-user-plus mr-1"></i> Tambah Murid</h3>
+          <button onclick="document.getElementById('modal-tambah-murid').remove()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+        </div>
+        <form onsubmit="window.submitTambahMurid(event)" class="space-y-3.5 text-left">
+          <div><label class="block text-xs font-bold text-gray-700 mb-1">Nama Lengkap <span class="text-red-500">*</span></label><input type="text" id="add-nama-santri" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343] font-medium" placeholder="Contoh: Ahmad Al-Fatih" required></div>
+          <div><label class="block text-xs font-bold text-gray-700 mb-1">NIS (Opsional)</label><input type="text" id="add-nis" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343] font-medium" placeholder="Contoh: 2026012"></div>
+          <div><label class="block text-xs font-bold text-gray-700 mb-1">Kelas <span class="text-red-500">*</span></label><select id="add-kelas" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343] font-medium" required><option value="">-- Pilih Kelas --</option>${listKelas.map(k => `<option value="${k}">${k}</option>`).join('')}</select></div>
+          <div><label class="block text-xs font-bold text-gray-700 mb-1">Halaqah / Ustadz <span class="text-red-500">*</span></label><select id="add-halaqah" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343] font-medium" required><option value="">-- Pilih Pengampu --</option>${listUstadz.map(u => `<option value="${u}">${u}</option>`).join('')}</select></div>
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Username Login <span class="text-red-500">*</span></label>
+            <input type="text" id="add-username" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343] font-medium lowercase" placeholder="nama + kelas, cth: ahmad1" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="this.value = this.value.toLowerCase().replace(/\\s+/g, '')" required>
+            <p class="text-[9px] text-red-500 mt-1">Hanya huruf kecil, tanpa spasi.</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Password Login <span class="text-red-500">*</span></label>
+            <input type="text" id="add-password" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-[#044343] font-medium lowercase" value="sditds" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="this.value = this.value.toLowerCase().replace(/\\s+/g, '')" required>
+          </div>
+          
+          <button type="submit" class="w-full bg-[#044343] text-white font-bold py-3.5 rounded-xl text-xs mt-2 shadow-md">Simpan Murid</button>
+        </form>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
+
+window.submitTambahMurid = async function(e) {
+  e.preventDefault();
+  let payload = {
+    nama_santri: document.getElementById('add-nama-santri').value.trim(), nis: document.getElementById('add-nis').value.trim(),
+    kelas: document.getElementById('add-kelas').value, halaqah: document.getElementById('add-halaqah').value,
+    username_ortu: document.getElementById('add-username').value.trim().toLowerCase(), password_ortu: document.getElementById('add-password').value.trim().toLowerCase()
+  };
+  Swal.fire({ title: 'Menyimpan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  let res = await window.apiCall('addSantriManual', payload);
+  if (res.success) { document.getElementById('modal-tambah-murid').remove(); window.playSuccessSound(); Swal.fire('Berhasil!', res.message, 'success'); window.loadDashboardData(); } 
+  else { Swal.fire('Gagal', res.message, 'error'); }
+};
+
+window.bukaModalEditMurid = function(jsonStr) {
+  // Decode HTML entities
+  let str = jsonStr.replace(/&quot;/g, '"');
+  let s = JSON.parse(str);
+  
+  let listKelas = [...new Set((state.kelas || []).map(k => k.nama_kelas || k.NAMA_KELAS).filter(Boolean))].sort();
+  let listUstadz = (state.ustadz || []).map(u => u.nama_lengkap || u.NAMA_LENGKAP).filter(Boolean).sort();
+  
+  // KITA PISAHKAN RUMUSNYA DI SINI AGAR EDITOR TIDAK MERAH
+  let optKelas = listKelas.map(k => '<option value="' + k + '" ' + ((s.kelas || s.KELAS) == k ? 'selected' : '') + '>' + k + '</option>').join('');
+  let optUstadz = listUstadz.map(u => '<option value="' + u + '" ' + ((s.halaqah || s.HALAQAH) == u ? 'selected' : '') + '>' + u + '</option>').join('');
+  
+  let modalHTML = `
+    <div id="modal-edit-murid" class="app-modal active" style="display: flex;">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 h-[85vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+          <h3 class="font-bold text-indigo-900"><i class="fas fa-edit mr-1"></i> Edit Murid</h3>
+          <button onclick="document.getElementById('modal-edit-murid').remove()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+        </div>
+        <form onsubmit="window.submitEditMurid(event)" class="space-y-3.5 text-left">
+          <input type="hidden" id="edit-id-santri" value="${s.id_santri || s.ID_SANTRI}">
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Nama Lengkap <span class="text-red-500">*</span></label>
+            <input type="text" id="edit-nama-santri" value="${s.nama_santri || s.NAMA_SANTRI || s.nama || ''}" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-indigo-500 font-medium" required>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">NIS (Opsional)</label>
+            <input type="text" id="edit-nis" value="${s.nis || s.NIS || ''}" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-indigo-500 font-medium">
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Kelas <span class="text-red-500">*</span></label>
+            <select id="edit-kelas" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-indigo-500 font-medium" required>${optKelas}</select>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Halaqah / Ustadz <span class="text-red-500">*</span></label>
+            <select id="edit-halaqah" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-indigo-500 font-medium" required>${optUstadz}</select>
+          </div>
+          
+          <div class="border-t border-gray-100 pt-3 mt-3">
+             <label class="block text-xs font-bold text-gray-700 mb-1">Ubah Username <span class="text-red-500">*</span></label>
+             <input type="text" id="edit-username" value="${s.username_ortu || s.username || s.USERNAME || ''}" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-indigo-500 font-medium lowercase" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="this.value = this.value.toLowerCase().split(' ').join('')" required>
+          </div>
+          
+          <div>
+             <label class="block text-xs font-bold text-gray-700 mb-1">Ubah Password <span class="text-gray-400 font-normal">(Isi jika ingin diubah)</span></label>
+             <input type="text" id="edit-password" value="${s.password_ortu || s.password || s.PASSWORD || ''}" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-indigo-500 font-medium lowercase" autocapitalize="none" autocomplete="off" spellcheck="false" oninput="this.value = this.value.toLowerCase().split(' ').join('')">
+          </div>
+          
+          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl text-xs mt-2 shadow-md">Simpan Perubahan</button>
+        </form>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
+
+window.submitEditMurid = async function(e) {
+  e.preventDefault();
+  let payload = {
+    id_santri: document.getElementById('edit-id-santri').value, nama_santri: document.getElementById('edit-nama-santri').value.trim(),
+    nis: document.getElementById('edit-nis').value.trim(), kelas: document.getElementById('edit-kelas').value, halaqah: document.getElementById('edit-halaqah').value,
+    username_ortu: document.getElementById('edit-username').value.trim().toLowerCase(), password_ortu: document.getElementById('edit-password').value.trim().toLowerCase()
+  };
+  Swal.fire({ title: 'Memperbarui...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  let res = await window.apiCall('editSantri', payload);
+  if (res.success) { document.getElementById('modal-edit-murid').remove(); window.playSuccessSound(); Swal.fire('Berhasil!', res.message, 'success'); window.loadDashboardData(); } 
+  else { Swal.fire('Gagal', res.message, 'error'); }
+};
+// ==========================================
+// FITUR UPLOAD MASSAL EXCEL MURID
+// ==========================================
+window.bukaModalUploadExcel = function() {
+  let modalHTML = `
+    <div id="modal-upload-excel" class="app-modal active" style="display: flex;">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100">
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+          <h3 class="font-bold text-emerald-900"><i class="fas fa-file-excel mr-1"></i> Upload Massal Excel Murid</h3>
+          <button onclick="document.getElementById('modal-upload-excel').remove()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="space-y-4 text-left">
+          <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 text-[11px] text-emerald-800 leading-relaxed">
+            <p class="font-bold mb-1"><i class="fas fa-info-circle"></i> Format Kolom Excel:</p>
+            Pastikan file Excel (.xlsx / .csv) memiliki baris judul kolom: <br>
+            <b>nama_santri</b>, <b>nis</b>, <b>kelas</b>, <b>halaqah</b>, <b>username_ortu</b>, <b>password_ortu</b>.
+            <div class="mt-2">
+               <a href="#" onclick="window.downloadTemplateExcel(event)" class="text-emerald-700 font-bold underline"><i class="fas fa-download"></i> Download Contoh Format Excel</a>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Pilih File Excel (.xlsx)</label>
+            <input type="file" id="file-excel-input" accept=".xlsx, .xls, .csv" class="w-full bg-[#F4EFE6] border border-gray-200 rounded-xl p-3 text-xs outline-none focus:border-emerald-500 font-medium file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700">
+          </div>
+
+          <button type="button" onclick="window.prosesUploadExcel()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl text-xs shadow-md transition-all">Proses & Unggah Data</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
+
+window.downloadTemplateExcel = function(e) {
+  e.preventDefault();
+  let templateData = [
+    { nama_santri: "Muhammad Arkan", nis: "2026001", kelas: "IV ALI BIN ABI THALIB", halaqah: "Ustadz Fadhl Al Harits", username_ortu: "arkan1", password_ortu: "sditds" },
+    { nama_santri: "Fatimah Az-Zahra", nis: "2026002", kelas: "IV ALI BIN ABI THALIB", halaqah: "Ustadz Fadhl Al Harits", username_ortu: "fatimah2", password_ortu: "sditds" }
+  ];
+  let ws = XLSX.utils.json_to_sheet(templateData);
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Format_Murid");
+  XLSX.writeFile(wb, "Template_Import_Murid_SDITDS.xlsx");
+};
+
+window.prosesUploadExcel = function() {
+  let fileInput = document.getElementById('file-excel-input');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    return Swal.fire('Peringatan', 'Pilih file Excel terlebih dahulu!', 'warning');
+  }
+
+  let file = fileInput.files[0];
+  let reader = new FileReader();
+
+  Swal.fire({ title: 'Membaca File...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+  reader.onload = async function(e) {
+    try {
+      let data = new Uint8Array(e.target.result);
+      let workbook = XLSX.read(data, { type: 'array' });
+      let firstSheetName = workbook.SheetNames[0];
+      let worksheet = workbook.Sheets[firstSheetName];
+      let jsonRows = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonRows.length === 0) {
+        return Swal.fire('Kosong', 'File Excel tidak memiliki data atau format salah.', 'error');
+      }
+
+      // Normalisasi nama kolom (mengubah spasi jadi underscore, huruf kecil semua)
+      let formattedData = jsonRows.map(row => {
+        let newRow = {};
+        Object.keys(row).forEach(key => {
+          let cleanKey = key.trim().toLowerCase().replace(/\s+/g, '_');
+          newRow[cleanKey] = row[key];
+        });
+        return {
+          nama_santri: newRow.nama_santri || newRow.nama || '',
+          nis: newRow.nis || '-',
+          kelas: newRow.kelas || '',
+          halaqah: newRow.halaqah || '',
+          username_ortu: String(newRow.username_ortu || newRow.username || '').trim().toLowerCase().split(' ').join(''),
+          password_ortu: String(newRow.password_ortu || newRow.password || 'sditds').trim().toLowerCase().split(' ').join('')
+        };
+      }).filter(r => r.nama_santri && r.username_ortu);
+
+      if (formattedData.length === 0) {
+        return Swal.fire('Format Salah', 'Pastikan kolom "nama_santri" dan "username_ortu" terisi di dalam file Excel.', 'error');
+      }
+
+      Swal.update({ title: `Mengunggah ${formattedData.length} data murid...`, html: 'Mohon tunggu, sedang diproses ke server...' });
+
+      let res = await window.apiCall('bulkAddSantri', formattedData);
+      if (res.success) {
+        document.getElementById('modal-upload-excel').remove();
+        window.playSuccessSound();
+        Swal.fire('Berhasil!', res.message, 'success');
+        window.loadDashboardData();
+      } else {
+        Swal.fire('Gagal', res.message, 'error');
+      }
+
+    } catch (err) {
+      Swal.fire('Error', 'Gagal membaca file Excel: ' + err.message, 'error');
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+};
 document.addEventListener('DOMContentLoaded', window.renderApp);
 </script>
 </body>
